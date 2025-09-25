@@ -6,7 +6,7 @@
 
 ## Development Workflow
 - Document design decisions in code for future reference
-- Always run unit tests after making changes using `python3 test_start_the_day.py`
+- Always run unit tests after making changes using `uv run pytest`
 
 ## Diagnostic Handling
 For diagnostic warnings, use specific Pyright ignore comments with error codes:

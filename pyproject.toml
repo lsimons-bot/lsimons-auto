@@ -17,4 +17,6 @@ pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+    "pytest>=8.0.0",
+]

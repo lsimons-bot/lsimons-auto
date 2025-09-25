@@ -29,7 +29,7 @@ This:
 
 ```bash
 # Using uv (recommended)
-uv run test_start_the_day.py
+uv run start_the_day.py
 
 # Run the daily routine
 python3 start_the_day.py
@@ -51,10 +51,10 @@ After installation, the script runs automatically via macOS LaunchAgent:
   ```bash
   # Check status
   launchctl list | grep com.leosimons.start-the-day
-  
+
   # Unload (disable)
   launchctl unload ~/Library/LaunchAgents/com.leosimons.start-the-day.plist
-  
+
   # Load (re-enable)
   launchctl load ~/Library/LaunchAgents/com.leosimons.start-the-day.plist
   ```
@@ -63,21 +63,21 @@ After installation, the script runs automatically via macOS LaunchAgent:
 
 - See [AGENT.md](AGENT.md) for development guidelines and agent instructions
 - See [DESIGN.md](DESIGN.md) for architectural decisions and design rationale
-- Run tests after changes: `python3 test_start_the_day.py`
+- Run tests after changes: `uv run pytest`
 
 ## Testing
 
 Unit tests are located in `test_start_the_day.py`. Run them using any of these methods:
 
 ```bash
-# Using uv (recommended)
-uv run test_start_the_day.py
+# Using uv with pytest (recommended)
+uv run pytest
 
-# Direct execution
+# Using uv with specific test file
+uv run pytest test_start_the_day.py
+
+# Direct execution (legacy)
 python3 test_start_the_day.py
-
-# Via unittest module
-python3 -m unittest test_start_the_day
 ```
 
 ## Customization
