@@ -28,9 +28,6 @@ python3 start_the_day.py
 
 # Force run even if already executed today
 python3 start_the_day.py --force
-
-# Run unit tests
-python3 start_the_day.py --test
 ```
 
 ## Configuration
@@ -41,7 +38,20 @@ The script stores execution state in `~/.start_the_day.toml` to track the last r
 
 - See [AGENT.md](AGENT.md) for development guidelines and agent instructions
 - See [DESIGN.md](DESIGN.md) for architectural decisions and design rationale
-- Run tests after changes: `python3 start_the_day.py --test`
+- Run tests after changes: `python3 test_start_the_day.py`
+
+## Testing
+
+Unit tests are located in `test_start_the_day.py`. Run them using any of these methods:
+
+```bash
+# Direct execution
+python3 test_start_the_day.py
+
+# Via unittest module
+python3 -m unittest test_start_the_day
+
+```
 
 ## Customization
 
