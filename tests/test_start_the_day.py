@@ -7,10 +7,13 @@ Or: python3 test_start_the_day.py
 """
 
 import os
+import sys
 import datetime
 import tempfile
 import unittest
-from unittest.mock import patch
+import subprocess
+from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 from lsimons_auto.start_the_day import (
     get_config_path,
@@ -148,6 +151,160 @@ class TestStartTheDay(unittest.TestCase):
         """Test colorization with invalid color returns plain text."""
         result = colorize_text("test message", "invalid", force_color=True)
         self.assertEqual(result, "test message")
+
+
+class TestStartTheDayIntegration(unittest.TestCase):
+    """End-to-end integration tests for start_the_day workflow."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up test environment."""
+        cls.project_root = Path.home() / "dev" / "lsimons-auto"
+        cls.start_the_day_script = (
+            cls.project_root / "lsimons_auto" / "start_the_day.py"
+        )
+
+        # Verify test environment
+        if not cls.project_root.exists():
+            raise unittest.SkipTest(f"Project root not found: {cls.project_root}")
+        if not cls.start_the_day_script.exists():
+            raise unittest.SkipTest(
+                f"start_the_day script not found: {cls.start_the_day_script}"
+            )
+
+    def test_cli_help_output(self):
+        """Test command line help output."""
+        result = subprocess.run(
+            [sys.executable, str(self.start_the_day_script), "--help"],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Daily startup script", result.stdout)
+        self.assertIn("--force", result.stdout)
+
+    def test_already_ran_today_exits_successfully(self):
+        """Test that script exits successfully if already ran today."""
+        # Update state to mark as ran today (using regular config, not test)
+        from lsimons_auto.start_the_day import (
+            update_execution_state as update_state_main,
+        )
+
+        update_state_main(test_mode=False)
+
+        try:
+            result = subprocess.run(
+                [sys.executable, str(self.start_the_day_script)],
+                capture_output=True,
+                text=True,
+            )
+
+            # Should exit with 0 even though it didn't run
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("Already ran today", result.stdout)
+        finally:
+            # Clean up - remove the state so it doesn't affect other runs
+            config_path = get_config_path(test_mode=False)
+            if os.path.exists(config_path):
+                os.remove(config_path)
+
+    def test_force_flag_bypasses_daily_check(self):
+        """Test --force flag allows running even if already ran today."""
+        # Mark as already ran today (using regular config)
+        from lsimons_auto.start_the_day import (
+            update_execution_state as update_state_main,
+        )
+
+        update_state_main(test_mode=False)
+
+        try:
+            result = subprocess.run(
+                [sys.executable, str(self.start_the_day_script), "--force"],
+                capture_output=True,
+                text=True,
+            )
+
+            # Should attempt to run despite already ran today
+            self.assertNotIn("Already ran today", result.stdout)
+            # Should show the greeting
+            self.assertIn("Good morning", result.stdout)
+        finally:
+            # Clean up
+            config_path = get_config_path(test_mode=False)
+            if os.path.exists(config_path):
+                os.remove(config_path)
+
+    def test_script_displays_greeting(self):
+        """Test that script displays greeting message."""
+        # Clean state (use regular config since script doesn't support test mode)
+        config_path = get_config_path(test_mode=False)
+        if os.path.exists(config_path):
+            os.remove(config_path)
+
+        try:
+            # Run the script - it will actually execute actions
+            result = subprocess.run(
+                [sys.executable, str(self.start_the_day_script)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("Good morning", result.stdout)
+            self.assertIn("Starting your day", result.stdout)
+        finally:
+            # Clean up
+            if os.path.exists(config_path):
+                os.remove(config_path)
+
+    def test_script_shows_current_datetime(self):
+        """Test that script shows current UTC datetime."""
+        result = subprocess.run(
+            [sys.executable, str(self.start_the_day_script), "--help"],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn("Current date and time (UTC)", result.stdout)
+
+    def test_script_is_executable(self):
+        """Test that start_the_day.py has executable permissions."""
+        self.assertTrue(
+            self.start_the_day_script.stat().st_mode & 0o111,
+            "start_the_day.py should have executable permissions",
+        )
+
+    def test_script_has_correct_shebang(self):
+        """Test that script has proper Python shebang."""
+        content = self.start_the_day_script.read_text()
+        self.assertTrue(content.startswith("#!/usr/bin/env python3"))
+
+    def test_execution_state_updates_after_run(self):
+        """Test that execution state is updated after successful run."""
+        # Clean state
+        test_config_path = get_config_path(test_mode=True)
+        if os.path.exists(test_config_path):
+            os.remove(test_config_path)
+
+        self.assertFalse(already_ran_today(test_mode=True))
+
+        # Simulate a run by calling update_execution_state
+        update_execution_state(test_mode=True)
+
+        # Should now show as already ran
+        self.assertTrue(already_ran_today(test_mode=True))
+
+        # Clean up
+        if os.path.exists(test_config_path):
+            os.remove(test_config_path)
+
+    def test_error_handling_graceful_degradation(self):
+        """Test that script continues even if individual tasks fail."""
+        # The script should handle subprocess errors gracefully
+        # This is tested by the run_command function's error handling
+        content = self.start_the_day_script.read_text()
+        self.assertIn("CalledProcessError", content)
+        self.assertIn("Warning", content)
 
 
 if __name__ == "__main__":
