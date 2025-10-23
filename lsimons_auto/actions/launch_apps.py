@@ -4,16 +4,27 @@ launch_apps.py - Launch predefined applications and commands in the background
 
 This action launches a hardcoded list of applications and commands that should
 run in the background for daily workflow setup.
+
+On the "paddo" host, only a subset of applications are launched.
 """
 
 import argparse
+import socket
 import subprocess
 import sys
 from typing import Optional
 
 
-# Hardcoded list of commands to launch
-LAUNCH_COMMANDS = [
+# Reduced command set for "paddo" host
+PADDO_COMMANDS = [
+    "open -g -a /System/Applications/TextEdit.app ~/scratch.txt",
+    "open -g /Applications/Ghostty.app",
+    "open -g '/Applications/Zed.app'",
+    "open -g '/Users/lsimons/Applications/IntelliJ IDEA Ultimate.app'",
+]
+
+# Full default command set for other hosts
+DEFAULT_COMMANDS = [
     "open -g -a /System/Applications/TextEdit.app ~/scratch.txt",
     "open -g /Applications/Ghostty.app",
     "open -g -a '/Applications/Brave Browser.app' 'https://schubergphilis.okta-emea.com/'",
@@ -27,6 +38,16 @@ LAUNCH_COMMANDS = [
     "open -g '/Users/lsimons/Applications/IntelliJ IDEA Ultimate.app'",
     # Add more commands here as needed
 ]
+
+
+def get_launch_commands() -> list[str]:
+    """Get the appropriate command list based on hostname."""
+    hostname = socket.gethostname().lower()
+
+    if hostname == "paddo":
+        return PADDO_COMMANDS
+    else:
+        return DEFAULT_COMMANDS
 
 
 def launch_command(command: str) -> bool:
@@ -54,16 +75,18 @@ def launch_command(command: str) -> bool:
 
 def launch_all_apps() -> None:
     """Launch all predefined applications and commands."""
-    if not LAUNCH_COMMANDS:
+    commands = get_launch_commands()
+
+    if not commands:
         print("No commands configured to launch")
         return
 
-    print(f"Launching {len(LAUNCH_COMMANDS)} command(s)...")
+    print(f"Launching {len(commands)} command(s)...")
 
     success_count = 0
-    total_count = len(LAUNCH_COMMANDS)
+    total_count = len(commands)
 
-    for command in LAUNCH_COMMANDS:
+    for command in commands:
         if launch_command(command):
             success_count += 1
 
@@ -90,8 +113,10 @@ def main(args: Optional[list[str]] = None) -> None:
     parsed_args = parser.parse_args(args)
 
     if parsed_args.list:
-        print("Configured launch commands:")
-        for i, command in enumerate(LAUNCH_COMMANDS, 1):
+        commands = get_launch_commands()
+        hostname = socket.gethostname()
+        print(f"Configured launch commands for host '{hostname}':")
+        for i, command in enumerate(commands, 1):
             print(f"  {i}. {command}")
         return
 

@@ -55,7 +55,7 @@ class TestLaunchApps(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0)
-        self.assertIn("Configured launch commands:", result.stdout)
+        self.assertIn("Configured launch commands for host", result.stdout)
         self.assertIn(
             "open -g -a /System/Applications/TextEdit.app ~/scratch.txt", result.stdout
         )
@@ -87,9 +87,40 @@ class TestLaunchApps(unittest.TestCase):
 
         self.assertFalse(result)
 
+    @patch("socket.gethostname")
+    def test_get_launch_commands_paddo(self, mock_gethostname):
+        """Test that paddo host gets reduced command set."""
+        mock_gethostname.return_value = "paddo"
+
+        commands = launch_apps.get_launch_commands()
+
+        self.assertEqual(commands, launch_apps.PADDO_COMMANDS)
+        self.assertEqual(len(commands), 4)
+
+    @patch("socket.gethostname")
+    def test_get_launch_commands_paddo_case_insensitive(self, mock_gethostname):
+        """Test that hostname matching is case-insensitive."""
+        mock_gethostname.return_value = "PADDO"
+
+        commands = launch_apps.get_launch_commands()
+
+        self.assertEqual(commands, launch_apps.PADDO_COMMANDS)
+
+    @patch("socket.gethostname")
+    def test_get_launch_commands_default(self, mock_gethostname):
+        """Test that other hosts get full command set."""
+        mock_gethostname.return_value = "otherhostname"
+
+        commands = launch_apps.get_launch_commands()
+
+        self.assertEqual(commands, launch_apps.DEFAULT_COMMANDS)
+        self.assertGreater(len(commands), 4)
+
     @patch("lsimons_auto.actions.launch_apps.launch_command")
-    def test_launch_all_apps_success(self, mock_launch_command):
+    @patch("lsimons_auto.actions.launch_apps.get_launch_commands")
+    def test_launch_all_apps_success(self, mock_get_commands, mock_launch_command):
         """Test launching all configured apps successfully."""
+        mock_get_commands.return_value = launch_apps.DEFAULT_COMMANDS
         mock_launch_command.return_value = True
 
         # Redirect stdout to capture output
@@ -98,14 +129,18 @@ class TestLaunchApps(unittest.TestCase):
 
         # Verify launch_command was called for each configured command
         self.assertEqual(
-            mock_launch_command.call_count, len(launch_apps.LAUNCH_COMMANDS)
+            mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS)
         )
 
     @patch("lsimons_auto.actions.launch_apps.launch_command")
-    def test_launch_all_apps_partial_failure(self, mock_launch_command):
+    @patch("lsimons_auto.actions.launch_apps.get_launch_commands")
+    def test_launch_all_apps_partial_failure(
+        self, mock_get_commands, mock_launch_command
+    ):
         """Test launching apps with some failures."""
+        mock_get_commands.return_value = launch_apps.DEFAULT_COMMANDS
         # Create a side_effect list that matches the number of commands
-        side_effects = [True, False] + [True] * (len(launch_apps.LAUNCH_COMMANDS) - 2)
+        side_effects = [True, False] + [True] * (len(launch_apps.DEFAULT_COMMANDS) - 2)
         mock_launch_command.side_effect = side_effects
 
         # Redirect stdout to capture output
@@ -114,7 +149,7 @@ class TestLaunchApps(unittest.TestCase):
 
         # Verify launch_command was called for each configured command
         self.assertEqual(
-            mock_launch_command.call_count, len(launch_apps.LAUNCH_COMMANDS)
+            mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS)
         )
 
     def test_main_with_list_argument(self):
@@ -133,12 +168,23 @@ class TestLaunchApps(unittest.TestCase):
         mock_launch_all_apps.assert_called_once()
 
     def test_launch_commands_configured(self):
-        """Test that at least one command is configured."""
-        self.assertGreater(len(launch_apps.LAUNCH_COMMANDS), 0)
+        """Test that command sets are properly configured."""
+        self.assertGreater(len(launch_apps.DEFAULT_COMMANDS), 0)
+        self.assertEqual(len(launch_apps.PADDO_COMMANDS), 4)
         self.assertIn(
             "open -g -a /System/Applications/TextEdit.app ~/scratch.txt",
-            launch_apps.LAUNCH_COMMANDS[0],
+            launch_apps.DEFAULT_COMMANDS[0],
         )
+        self.assertIn(
+            "open -g -a /System/Applications/TextEdit.app ~/scratch.txt",
+            launch_apps.PADDO_COMMANDS[0],
+        )
+        # Verify PADDO_COMMANDS contains the expected apps
+        paddo_commands_str = " ".join(launch_apps.PADDO_COMMANDS)
+        self.assertIn("TextEdit", paddo_commands_str)
+        self.assertIn("Ghostty", paddo_commands_str)
+        self.assertIn("Zed", paddo_commands_str)
+        self.assertIn("IntelliJ IDEA", paddo_commands_str)
 
 
 if __name__ == "__main__":
