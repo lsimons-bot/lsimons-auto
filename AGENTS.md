@@ -160,15 +160,32 @@ Add to MCP config (e.g., `~/.config/claude/config.json`):
 
 Then use `mcp__beads__*` functions instead of CLI commands.
 
+### Workflow: Update bd BEFORE Committing
+
+**CRITICAL**: Always update bd issue status **before** making commits:
+
+1. `bd update <id> --status in_progress --json` - Claim the work
+2. Do the work (make code changes)
+3. `bd close <id> --reason "Description of what was done" --json` - Close the issue
+4. `git add -A && git commit -m "..."` - Commit (includes `.beads/issues.jsonl`)
+5. Repeat for next issue
+
+This ensures:
+- Issue status is tracked in version control
+- Commits reference closed issues
+- `.beads/issues.jsonl` is always up-to-date in commits
+
 ### Important Rules
 
 - ✅ Use bd for ALL task tracking
 - ✅ Always use `--json` flag for programmatic use
+- ✅ **Update bd status BEFORE committing** (not after)
 - ✅ Link discovered work with `discovered-from` dependencies
 - ✅ Check `bd ready` before asking "what should I work on?"
 - ❌ Do NOT create markdown TODO lists
 - ❌ Do NOT use external issue trackers
 - ❌ Do NOT duplicate tracking systems
+- ❌ Do NOT commit before updating bd status
 
 For more details, see README.md and QUICKSTART.md.
 
