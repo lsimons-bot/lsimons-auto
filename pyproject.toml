@@ -31,3 +31,9 @@ typeCheckingMode = "strict"
 dev = [
     "pytest>=8.0.0",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
+addopts = "-m 'not integration'"

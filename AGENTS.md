@@ -36,6 +36,16 @@ The `lsimons-auto` project is a comprehensive personal automation toolkit for ma
     - Use the `argparse` module for command-line argument handling.
 3.  **Add Tests**: Create a corresponding test file in the `tests/` directory.
 
+### Testing
+
+- **Unit tests**: Fast tests with no side effects (run by default with `uv run pytest`)
+- **Integration tests**: End-to-end tests with real side effects (file I/O, subprocess calls)
+  - Mark integration test classes with `@pytest.mark.integration`
+  - Run explicitly with `uv run pytest -m integration`
+  - Skipped by default to keep test runs fast
+- **Test separation**: Unit tests validate logic, integration tests validate real-world behavior
+- **Default behavior**: `uv run pytest` runs only unit tests (fast feedback loop)
+
 ### Code Style
 
 - **Typing**: The project uses strict type checking with `pyright`. All new code must be fully type-hinted.

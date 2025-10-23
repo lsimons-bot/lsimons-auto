@@ -14,6 +14,7 @@ import unittest
 import subprocess
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import pytest
 
 from lsimons_auto.start_the_day import (
     get_config_path,
@@ -153,6 +154,7 @@ class TestStartTheDay(unittest.TestCase):
         self.assertEqual(result, "test message")
 
 
+@pytest.mark.integration
 class TestStartTheDayIntegration(unittest.TestCase):
     """End-to-end integration tests for start_the_day workflow."""
 

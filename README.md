@@ -139,11 +139,20 @@ This project follows a spec-based development approach documented in [`docs/spec
 
 ## Testing
 
-Unit and integration tests are located in `tests/`. Run them using:
+Unit and integration tests are located in `tests/`. Tests are separated by markers:
+
+- **Unit tests**: Fast, no side effects, run by default
+- **Integration tests**: End-to-end tests with real side effects (file I/O, subprocess calls)
 
 ```bash
-# Full test suite (recommended)
+# Run unit tests only (default, fast)
 uv run pytest
+
+# Run all tests including integration tests
+uv run pytest -m ""
+
+# Run only integration tests
+uv run pytest -m integration
 
 # Specific test file
 uv run pytest tests/test_start_the_day.py

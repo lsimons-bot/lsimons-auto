@@ -10,8 +10,10 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+import pytest
 
 
+@pytest.mark.integration
 class TestActionsIntegration(unittest.TestCase):
     """Integration tests for the actions system."""
 
@@ -293,6 +295,7 @@ class TestActionsIntegration(unittest.TestCase):
         self.assertIn("organize", result.stdout.lower())
 
 
+@pytest.mark.integration
 class TestInstallation(unittest.TestCase):
     """Test installation functionality."""
 
