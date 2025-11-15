@@ -138,17 +138,17 @@ def start_the_day() -> None:
     # Run daily tasks
     run_command(["auto", "organize_desktop"], "Organizing desktop", "Desktop organized")
 
-    run_command(
-        ["auto", "update_desktop_background"],
-        "Updating desktop background",
-        "Desktop background updated",
-    )
+    # run_command(
+    #     ["auto", "update_desktop_background"],
+    #     "Updating desktop background",
+    #     "Desktop background updated",
+    # )
 
-    run_command(
-        ["auto", "launch_apps"],
-        "Launching apps",
-        "Apps launched",
-    )
+    # run_command(
+    #     ["auto", "launch_apps"],
+    #     "Launching apps",
+    #     "Apps launched",
+    # )
 
     print(colorize_text("✓ Daily startup routine completed", "green"))
 
