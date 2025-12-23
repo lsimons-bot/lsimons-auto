@@ -16,8 +16,11 @@ from pathlib import Path
 
 def discover_actions() -> dict[str, Path]:
     """Discover available action scripts in the actions directory."""
-    project_root = Path.home() / "dev" / "lsimons-auto"
-    actions_dir = project_root / "lsimons_auto" / "actions"
+    # Determine project root relative to this script file
+    # This script is at lsimons_auto/lsimons_auto.py
+    # So project root is the parent directory
+    script_dir = Path(__file__).parent
+    actions_dir = script_dir / "actions"
     actions: dict[str, Path] = {}
 
     if not actions_dir.exists():
@@ -41,7 +44,7 @@ def main() -> None:
 
     if not actions:
         print("Error: No actions found in actions directory")
-        print("Expected location: ~/dev/lsimons-auto/lsimons_auto/actions/")
+        print(f"Expected location: {Path(__file__).parent / 'actions'}")
         sys.exit(1)
 
     # Parse arguments manually to handle unknown actions gracefully
