@@ -109,6 +109,11 @@ def main(args: Optional[list[str]] = None) -> None:
     parser.add_argument(
         "--dry-run", action="store_true", help="Print what would be done without doing it"
     )
+    parser.add_argument(
+        "--include-archive",
+        action="store_true",
+        help="Include archived repositories in the sync",
+    )
     parsed_args = parser.parse_args(args)
 
     base_dir = Path.home() / "git"
@@ -139,15 +144,16 @@ def main(args: Optional[list[str]] = None) -> None:
             sync_repo(repo, lsimons_dir)
 
     # Sync archived repos
-    print("Fetching archived repository list...")
-    archived_repos = get_repos(archive=True)
-    print(f"Found {len(archived_repos)} archived repositories.")
+    if parsed_args.include_archive:
+        print("Fetching archived repository list...")
+        archived_repos = get_repos(archive=True)
+        print(f"Found {len(archived_repos)} archived repositories.")
 
-    for repo in archived_repos:
-        if parsed_args.dry_run:
-            print(f"Would sync archived repo: {repo} to {archive_dir}")
-        else:
-            sync_repo(repo, archive_dir)
+        for repo in archived_repos:
+            if parsed_args.dry_run:
+                print(f"Would sync archived repo: {repo} to {archive_dir}")
+            else:
+                sync_repo(repo, archive_dir)
 
 
 if __name__ == "__main__":
