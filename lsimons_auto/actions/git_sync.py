@@ -10,6 +10,7 @@ Archived repos go to ~/git/<owner>/archive (if enabled).
 import argparse
 import json
 import shutil
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -20,12 +21,13 @@ class OwnerConfig(NamedTuple):
     name: str
     local_dir: Optional[str] = None
     allow_archived: bool = True
+    hostname_filter: Optional[str] = None
 
 
 OWNER_CONFIGS = [
     OwnerConfig(name="lsimons"),
     OwnerConfig(name="typelinkmodel"),
-    OwnerConfig(name="LAB271", local_dir="labs", allow_archived=False),
+    OwnerConfig(name="LAB271", local_dir="labs", allow_archived=False, hostname_filter="sbp"),
 ]
 
 
@@ -181,7 +183,14 @@ def main(args: Optional[list[str]] = None) -> None:
     else:
         configs_to_process = OWNER_CONFIGS
 
+    current_hostname = socket.gethostname()
+
     for config in configs_to_process:
+        # Check hostname filter
+        if config.hostname_filter and not current_hostname.startswith(config.hostname_filter):
+            print(f"Skipping {config.name}: Hostname '{current_hostname}' does not start with '{config.hostname_filter}'.")
+            continue
+
         owner = config.name
         # Use custom local directory if specified, otherwise use owner name
         local_dirname = config.local_dir if config.local_dir else owner
