@@ -36,7 +36,14 @@ def main(args: Optional[list[str]] = None) -> None:
         return
 
     # 3. Check rclone availability
-    if not shutil.which("rclone"):
+    # Use absolute path since launchd environment doesn't have full PATH
+    rclone_path = "/opt/homebrew/bin/rclone"
+    
+    # Fallback to shutil.which if absolute path doesn't exist (e.g. non-Apple Silicon Mac)
+    if not os.path.exists(rclone_path):
+        rclone_path = shutil.which("rclone")
+    
+    if not rclone_path:
         print("Error: rclone is not installed or not in PATH.")
         sys.exit(1)
 
@@ -50,7 +57,7 @@ def main(args: Optional[list[str]] = None) -> None:
         # Using subprocess to call rclone
         # We allow stdout/stderr to flow to the console
         result = subprocess.run(
-            ["rclone", "sync", source, destination, "--verbose"],
+            [rclone_path, "sync", source, destination, "--verbose"],
             check=True
         )
         print("Sync completed successfully.")
