@@ -14,7 +14,7 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional, NamedTuple
+from typing import NamedTuple, Optional
 
 
 class OwnerConfig(NamedTuple):
@@ -26,13 +26,17 @@ class OwnerConfig(NamedTuple):
 
 OWNER_CONFIGS = [
     OwnerConfig(name="lsimons"),
+    OwnerConfig(name="lsimons-bot"),
     OwnerConfig(name="typelinkmodel"),
-    OwnerConfig(name="LAB271", local_dir="labs", allow_archived=False, hostname_filter="sbp"),
+    OwnerConfig(
+        name="LAB271", local_dir="labs", allow_archived=False, hostname_filter="sbp"
+    ),
 ]
 
 
 class ForkContext(NamedTuple):
     """Context about GitHub forks for the authenticated user."""
+
     username: str
     fork_map: dict[str, str]  # Maps "owner/repo" -> fork_url
 
@@ -96,7 +100,7 @@ def get_repos(owner: str, archive: bool = False) -> list[str]:
     for repo in repos_data:
         if repo.get("isFork") is True:
             continue
-        
+
         is_repo_archived = repo.get("isArchived", False)
         if archive and is_repo_archived:
             filtered_repos.append(repo["name"])
@@ -149,7 +153,11 @@ def get_user_forks(username: str) -> dict[str, str]:
             parent = fork.get("parent")
             if parent and isinstance(parent, dict):
                 parent_owner = parent.get("owner", {})
-                parent_owner_login = parent_owner.get("login") if isinstance(parent_owner, dict) else None
+                parent_owner_login = (
+                    parent_owner.get("login")
+                    if isinstance(parent_owner, dict)
+                    else None
+                )
                 parent_name = parent.get("name")
                 if parent_owner_login and parent_name:
                     parent_full_name = f"{parent_owner_login}/{parent_name}"
@@ -176,7 +184,9 @@ def build_fork_context() -> Optional[ForkContext]:
     return ForkContext(username=username, fork_map=fork_map)
 
 
-def configure_fork_remotes(repo_path: Path, fork_url: str, upstream_url: str, dry_run: bool) -> bool:
+def configure_fork_remotes(
+    repo_path: Path, fork_url: str, upstream_url: str, dry_run: bool
+) -> bool:
     """Configure fork remotes using origin/upstream pattern."""
     if dry_run:
         print(f"Would reconfigure remotes for {repo_path.name}:")
@@ -212,13 +222,17 @@ def configure_fork_remotes(repo_path: Path, fork_url: str, upstream_url: str, dr
 
             if current_origin != fork_url:
                 print(f"Reconfiguring origin for {repo_path.name}...")
-                if not run_command(["git", "remote", "set-url", "origin", fork_url], cwd=repo_path):
+                if not run_command(
+                    ["git", "remote", "set-url", "origin", fork_url], cwd=repo_path
+                ):
                     return False
             else:
                 print(f"Origin already configured correctly for {repo_path.name}")
         else:
             print(f"Adding origin remote for {repo_path.name}...")
-            if not run_command(["git", "remote", "add", "origin", fork_url], cwd=repo_path):
+            if not run_command(
+                ["git", "remote", "add", "origin", fork_url], cwd=repo_path
+            ):
                 return False
 
         # Configure upstream remote
@@ -236,13 +250,18 @@ def configure_fork_remotes(repo_path: Path, fork_url: str, upstream_url: str, dr
 
             if current_upstream != upstream_url:
                 print(f"Reconfiguring upstream for {repo_path.name}...")
-                if not run_command(["git", "remote", "set-url", "upstream", upstream_url], cwd=repo_path):
+                if not run_command(
+                    ["git", "remote", "set-url", "upstream", upstream_url],
+                    cwd=repo_path,
+                ):
                     return False
             else:
                 print(f"Upstream already configured correctly for {repo_path.name}")
         else:
             print(f"Adding upstream remote for {repo_path.name}...")
-            if not run_command(["git", "remote", "add", "upstream", upstream_url], cwd=repo_path):
+            if not run_command(
+                ["git", "remote", "add", "upstream", upstream_url], cwd=repo_path
+            ):
                 return False
 
         # Fetch from both remotes
@@ -264,7 +283,13 @@ def configure_fork_remotes(repo_path: Path, fork_url: str, upstream_url: str, dr
         return False
 
 
-def sync_repo(owner: str, repo_name: str, target_dir: Path, fork_context: Optional[ForkContext] = None, dry_run: bool = False) -> bool:
+def sync_repo(
+    owner: str,
+    repo_name: str,
+    target_dir: Path,
+    fork_context: Optional[ForkContext] = None,
+    dry_run: bool = False,
+) -> bool:
     """
     Sync a single repository.
     Returns True if successful, False otherwise.
@@ -308,17 +333,17 @@ def fetch_directory_repos(
         return
 
     print(f"Scanning {directory} for additional repositories...")
-    
+
     # Iterate over subdirectories
     for item in directory.iterdir():
         if not item.is_dir():
             continue
-            
+
         # Check if it's a git repo
         if (item / ".git").exists():
             if item.resolve() in visited_repos:
                 continue
-                
+
             if dry_run:
                 print(f"Would fetch existing repo: {item}")
             else:
@@ -334,7 +359,9 @@ def main(args: Optional[list[str]] = None) -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Print what would be done without doing it"
+        "--dry-run",
+        action="store_true",
+        help="Print what would be done without doing it",
     )
     parser.add_argument(
         "--include-archive",
@@ -366,8 +393,12 @@ def main(args: Optional[list[str]] = None) -> None:
 
     for config in configs_to_process:
         # Check hostname filter
-        if config.hostname_filter and not current_hostname.startswith(config.hostname_filter):
-            print(f"Skipping {config.name}: Hostname '{current_hostname}' does not start with '{config.hostname_filter}'.")
+        if config.hostname_filter and not current_hostname.startswith(
+            config.hostname_filter
+        ):
+            print(
+                f"Skipping {config.name}: Hostname '{current_hostname}' does not start with '{config.hostname_filter}'."
+            )
             continue
 
         owner = config.name
@@ -375,7 +406,7 @@ def main(args: Optional[list[str]] = None) -> None:
         local_dirname = config.local_dir if config.local_dir else owner
         owner_dir = base_dir / local_dirname
         archive_dir = owner_dir / "archive"
-        
+
         # Track visited repos to avoid double-fetching
         visited_repos: set[Path] = set()
 
@@ -399,7 +430,7 @@ def main(args: Optional[list[str]] = None) -> None:
         for repo in active_repos:
             repo_path = (owner_dir / repo).resolve()
             visited_repos.add(repo_path)
-            
+
             if parsed_args.dry_run:
                 print(f"Would sync active repo: {owner}/{repo} to {owner_dir}")
                 # Still need to call sync_repo to handle fork configuration in dry-run
@@ -408,7 +439,9 @@ def main(args: Optional[list[str]] = None) -> None:
                     if repo_full_name in fork_context.fork_map:
                         fork_url = fork_context.fork_map[repo_full_name]
                         upstream_url = f"https://github.com/{owner}/{repo}.git"
-                        configure_fork_remotes(owner_dir / repo, fork_url, upstream_url, True)
+                        configure_fork_remotes(
+                            owner_dir / repo, fork_url, upstream_url, True
+                        )
             else:
                 sync_repo(owner, repo, owner_dir, fork_context, parsed_args.dry_run)
 
@@ -424,22 +457,30 @@ def main(args: Optional[list[str]] = None) -> None:
                     visited_repos.add(repo_path)
 
                     if parsed_args.dry_run:
-                        print(f"Would sync archived repo: {owner}/{repo} to {archive_dir}")
+                        print(
+                            f"Would sync archived repo: {owner}/{repo} to {archive_dir}"
+                        )
                         # Still need to check fork configuration in dry-run
                         if fork_context and (archive_dir / repo).exists():
                             repo_full_name = f"{owner}/{repo}"
                             if repo_full_name in fork_context.fork_map:
                                 fork_url = fork_context.fork_map[repo_full_name]
                                 upstream_url = f"https://github.com/{owner}/{repo}.git"
-                                configure_fork_remotes(archive_dir / repo, fork_url, upstream_url, True)
+                                configure_fork_remotes(
+                                    archive_dir / repo, fork_url, upstream_url, True
+                                )
                     else:
-                        sync_repo(owner, repo, archive_dir, fork_context, parsed_args.dry_run)
+                        sync_repo(
+                            owner, repo, archive_dir, fork_context, parsed_args.dry_run
+                        )
             else:
-                print(f"Skipping archived repositories for {owner} (configured to ignore)")
-        
+                print(
+                    f"Skipping archived repositories for {owner} (configured to ignore)"
+                )
+
         # Sync any other existing repos in the directories
         fetch_directory_repos(owner_dir, visited_repos, parsed_args.dry_run)
-        
+
         # Only scan archive directory if archives are included
         if parsed_args.include_archive and archive_dir.exists():
             fetch_directory_repos(archive_dir, visited_repos, parsed_args.dry_run)
