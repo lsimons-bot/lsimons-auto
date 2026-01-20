@@ -33,4 +33,26 @@
 - Path handling: Use `pathlib` for all path manipulations.
 - The action name is `git_sync.py` (maps to `auto git-sync`).
 
+**Fork Remote Configuration (lsimons-bot):**
+- When authenticated as `lsimons-bot`, automatically configures fork remotes using origin/upstream pattern
+- Detects authenticated user via `gh api user`
+- If user is `lsimons-bot`, fetches list of all forks owned by that user
+- For each synced repository that has a fork:
+  - Configures `origin` remote → fork URL (lsimons-bot's fork)
+  - Configures `upstream` remote → original URL (parent repo)
+  - Sets GitHub CLI repo config:
+    - Push destination: `origin` (fork)
+    - Pull request base: `upstream` (parent repo)
+- Example valid setup:
+  ```
+  origin    https://github.com/lsimons-bot/repo-name.git (fetch/push)
+  upstream  https://github.com/original-org/repo-name.git (fetch/push)
+  ```
+- All fork operations are best-effort (failures don't block main sync):
+  - Missing `gh` CLI skips fork configuration
+  - GitHub API errors are reported but sync continues
+  - Per-repo fork failures warn but continue to next repo
+- Respects `--dry-run` flag (prints what would be done)
+- Idempotent: checks for existing remotes before reconfiguring
+
 **Status:** Implemented
