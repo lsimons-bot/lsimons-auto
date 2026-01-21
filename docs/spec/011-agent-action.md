@@ -5,7 +5,7 @@
 **Requirements:**
 - Spawn a new Ghostty window with main agent pane and 1-4 configurable subagent panes
 - Workspace selection from ~/git/{org}/{repo} structure with fuzzy matching
-- Open workspace folder in Zed editor alongside Ghostty
+- Open workspace folder in Zed editor alongside Ghostty, with terminal panel open
 - Position Ghostty and Zed windows to fill screen (not full screen mode)
 - Send commands/text to specific agents or broadcast to all
 - Focus, close, and list agent panes
@@ -41,7 +41,7 @@
 - Follow action script architecture from DESIGN.md (template in 000-shared-patterns.md)
 - Use AppleScript via `osascript` for Ghostty window/pane control and window positioning
 - Control via Ghostty keybindings: Cmd+D (split right), Cmd+Shift+D (split down)
-- Launch Zed with `zed {workspace_path}` after Ghostty setup
+- Launch Zed with `zed {workspace_path}`, then send Cmd+J via AppleScript to open terminal panel
 - Position both Ghostty and Zed windows to fill the screen (overlapping, not full screen mode)
 - Store session state in `~/.config/auto/agent/sessions/{session-id}.json`
 
