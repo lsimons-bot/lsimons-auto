@@ -84,14 +84,26 @@ class TestFuzzyMatching(unittest.TestCase):
         self.assertEqual(result[0], "Lsimons")
         self.assertEqual(result[1], "Lsimons-Auto")
 
-    def test_fuzzy_match_ambiguous_org_raises(self) -> None:
-        """Test ambiguous org match raises ValueError."""
+    def test_fuzzy_match_exact_org_preferred(self) -> None:
+        """Test exact org match is preferred over partial matches."""
         workspaces = {
             "lsimons": {"lsimons-auto": Path("/a")},
             "lsimons-bot": {"bot-repo": Path("/b")},
         }
+        # "lsimons" should match exactly, not raise ambiguity
+        result = workspace.fuzzy_match_workspace("lsimons", "auto", workspaces)
+        self.assertEqual(result[0], "lsimons")
+        self.assertEqual(result[1], "lsimons-auto")
+
+    def test_fuzzy_match_ambiguous_org_raises(self) -> None:
+        """Test ambiguous org match raises ValueError when no exact match."""
+        workspaces = {
+            "lsimons-dev": {"repo-a": Path("/a")},
+            "lsimons-bot": {"repo-b": Path("/b")},
+        }
+        # "lsimons" matches both but is not exact match for either
         with self.assertRaises(ValueError) as cm:
-            workspace.fuzzy_match_workspace("lsimons", "auto", workspaces)
+            workspace.fuzzy_match_workspace("lsimons", "repo", workspaces)
         self.assertIn("Ambiguous", str(cm.exception))
 
     def test_fuzzy_match_ambiguous_repo_raises(self) -> None:

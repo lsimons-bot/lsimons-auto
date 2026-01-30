@@ -57,7 +57,12 @@ def fuzzy_match_workspace(
     if len(matching_orgs) == 0:
         raise ValueError(f"No org found matching '{query_org}'")
     if len(matching_orgs) > 1:
-        raise ValueError(f"Ambiguous org match for '{query_org}': {matching_orgs}")
+        # Prefer exact match if available
+        exact = [o for o in matching_orgs if o.lower() == query_org.lower()]
+        if len(exact) == 1:
+            matching_orgs = exact
+        else:
+            raise ValueError(f"Ambiguous org match for '{query_org}': {matching_orgs}")
 
     org = matching_orgs[0]
     repos = workspaces[org]
@@ -67,7 +72,12 @@ def fuzzy_match_workspace(
     if len(matching_repos) == 0:
         raise ValueError(f"No repo found matching '{query_repo}' in org '{org}'")
     if len(matching_repos) > 1:
-        raise ValueError(f"Ambiguous repo match for '{query_repo}': {matching_repos}")
+        # Prefer exact match if available
+        exact = [r for r in matching_repos if r.lower() == query_repo.lower()]
+        if len(exact) == 1:
+            matching_repos = exact
+        else:
+            raise ValueError(f"Ambiguous repo match for '{query_repo}': {matching_repos}")
 
     repo = matching_repos[0]
     return (org, repo, repos[repo])
