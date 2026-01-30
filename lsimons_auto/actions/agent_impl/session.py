@@ -23,6 +23,7 @@ class AgentPane:
     command: str  # e.g., "claude" or "pi"
     is_main: bool
     worktree_path: Optional[str] = None  # Path to git worktree for this pane
+    tmux_pane_id: Optional[str] = None  # tmux pane ID (e.g., "%0", "%1")
 
 
 @dataclass
@@ -34,8 +35,9 @@ class AgentSession:
     repo_name: str  # e.g., "lsimons-auto"
     org_name: str  # e.g., "lsimons"
     created_at: str  # ISO timestamp
-    panes: list[AgentPane] = field(default_factory=list)
-    window_id: Optional[int] = None  # Ghostty window ID for targeted close
+    panes: list[AgentPane] = field(default_factory=lambda: [])
+    window_id: Optional[int] = None  # Deprecated: Ghostty window ID
+    tmux_session_name: Optional[str] = None  # tmux session name
 
     @classmethod
     def load(cls, session_id: str) -> "AgentSession":

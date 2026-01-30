@@ -58,6 +58,19 @@ class TestWorkspaceDiscovery(unittest.TestCase):
         workspaces = workspace.discover_workspaces(Path("/nonexistent/path"))
         self.assertEqual(workspaces, {})
 
+    def test_discover_workspaces_ignores_worktrees(self) -> None:
+        """Test workspace discovery ignores -worktrees directories."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            git_root = Path(tmpdir)
+            (git_root / "org1" / "myrepo").mkdir(parents=True)
+            (git_root / "org1" / "myrepo-worktrees").mkdir(parents=True)
+
+            workspaces = workspace.discover_workspaces(git_root)
+
+            self.assertIn("org1", workspaces)
+            self.assertIn("myrepo", workspaces["org1"])
+            self.assertNotIn("myrepo-worktrees", workspaces["org1"])
+
 
 class TestFuzzyMatching(unittest.TestCase):
     """Test fuzzy matching functionality."""
@@ -84,14 +97,26 @@ class TestFuzzyMatching(unittest.TestCase):
         self.assertEqual(result[0], "Lsimons")
         self.assertEqual(result[1], "Lsimons-Auto")
 
-    def test_fuzzy_match_ambiguous_org_raises(self) -> None:
-        """Test ambiguous org match raises ValueError."""
+    def test_fuzzy_match_exact_org_preferred(self) -> None:
+        """Test exact org match is preferred over partial matches."""
         workspaces = {
             "lsimons": {"lsimons-auto": Path("/a")},
             "lsimons-bot": {"bot-repo": Path("/b")},
         }
+        # "lsimons" should match exactly, not raise ambiguity
+        result = workspace.fuzzy_match_workspace("lsimons", "auto", workspaces)
+        self.assertEqual(result[0], "lsimons")
+        self.assertEqual(result[1], "lsimons-auto")
+
+    def test_fuzzy_match_ambiguous_org_raises(self) -> None:
+        """Test ambiguous org match raises ValueError when no exact match."""
+        workspaces = {
+            "lsimons-dev": {"repo-a": Path("/a")},
+            "lsimons-bot": {"repo-b": Path("/b")},
+        }
+        # "lsimons" matches both but is not exact match for either
         with self.assertRaises(ValueError) as cm:
-            workspace.fuzzy_match_workspace("lsimons", "auto", workspaces)
+            workspace.fuzzy_match_workspace("lsimons", "repo", workspaces)
         self.assertIn("Ambiguous", str(cm.exception))
 
     def test_fuzzy_match_ambiguous_repo_raises(self) -> None:
