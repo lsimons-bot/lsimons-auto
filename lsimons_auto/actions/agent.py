@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-agent.py - Manage multiple Claude Code CLI instances in Ghostty terminal
+agent.py - Manage multiple Claude Code CLI instances in tmux
 
-Spawns Ghostty windows with configurable agent pane layouts, integrates with
+Spawns tmux sessions with configurable agent pane layouts, integrates with
 Zed editor, and provides session management for multi-agent workflows.
 
 This module is a thin wrapper that delegates to the agent_impl package.
@@ -13,7 +13,6 @@ All implementation is in lsimons_auto/actions/agent_impl/.
 try:
     # Package import (when imported as lsimons_auto.actions.agent)
     from .agent_impl import (
-        APPLESCRIPT_DELAY,
         GIT_ROOT,
         SESSIONS_DIR,
         AgentPane,
@@ -25,9 +24,9 @@ try:
         get_most_recent_session,
         list_sessions,
         main,
-        run_applescript,
     )
     from .agent_impl.cli import (
+        cmd_attach,
         cmd_broadcast,
         cmd_close,
         cmd_focus,
@@ -36,22 +35,20 @@ try:
         cmd_send,
         cmd_spawn,
     )
-    from .agent_impl.ghostty import (
-        activate_app,
-        ghostty_close_pane,
-        ghostty_close_window_by_id,
-        ghostty_focus_direction,
-        ghostty_get_front_window_id,
-        ghostty_new_window,
-        ghostty_run_command,
-        ghostty_split_down,
-        ghostty_split_right,
-        key_code,
-        keystroke,
-        press_return,
-        send_text,
-    )
     from .agent_impl.layout import create_layout, start_agents_in_panes
+    from .agent_impl.tmux import (
+        attach_session,
+        create_session,
+        focus_pane_direction,
+        kill_pane,
+        kill_session,
+        run_tmux,
+        select_pane,
+        send_keys,
+        session_exists,
+        split_pane_horizontal,
+        split_pane_vertical,
+    )
     from .agent_impl.worktree import (
         ensure_worktree,
         ensure_worktrees_dir,
@@ -59,11 +56,9 @@ try:
         list_worktrees,
         remove_worktree,
     )
-    from .agent_impl.zed import launch_zed_with_terminal, position_windows_fill_screen
 except ImportError:
     # Direct script execution (when run as `python agent.py`)
     from agent_impl import (  # pyright: ignore[reportMissingImports]
-        APPLESCRIPT_DELAY,
         GIT_ROOT,
         SESSIONS_DIR,
         AgentPane,
@@ -75,9 +70,9 @@ except ImportError:
         get_most_recent_session,
         list_sessions,
         main,
-        run_applescript,
     )
     from agent_impl.cli import (  # pyright: ignore[reportMissingImports]
+        cmd_attach,
         cmd_broadcast,
         cmd_close,
         cmd_focus,
@@ -86,24 +81,22 @@ except ImportError:
         cmd_send,
         cmd_spawn,
     )
-    from agent_impl.ghostty import (  # pyright: ignore[reportMissingImports]
-        activate_app,
-        ghostty_close_pane,
-        ghostty_close_window_by_id,
-        ghostty_focus_direction,
-        ghostty_get_front_window_id,
-        ghostty_new_window,
-        ghostty_run_command,
-        ghostty_split_down,
-        ghostty_split_right,
-        key_code,
-        keystroke,
-        press_return,
-        send_text,
-    )
     from agent_impl.layout import (  # pyright: ignore[reportMissingImports]
         create_layout,
         start_agents_in_panes,
+    )
+    from agent_impl.tmux import (  # pyright: ignore[reportMissingImports]
+        attach_session,
+        create_session,
+        focus_pane_direction,
+        kill_pane,
+        kill_session,
+        run_tmux,
+        select_pane,
+        send_keys,
+        session_exists,
+        split_pane_horizontal,
+        split_pane_vertical,
     )
     from agent_impl.worktree import (  # pyright: ignore[reportMissingImports]
         ensure_worktree,
@@ -111,10 +104,6 @@ except ImportError:
         get_worktree_branch,
         list_worktrees,
         remove_worktree,
-    )
-    from agent_impl.zed import (  # pyright: ignore[reportMissingImports]
-        launch_zed_with_terminal,
-        position_windows_fill_screen,
     )
 
 __all__ = [
@@ -125,7 +114,6 @@ __all__ = [
     "AgentPane",
     "AgentSession",
     # Constants
-    "APPLESCRIPT_DELAY",
     "SESSIONS_DIR",
     "GIT_ROOT",
     # Session management
@@ -141,30 +129,24 @@ __all__ = [
     "get_worktree_branch",
     "remove_worktree",
     "list_worktrees",
-    # AppleScript helpers
-    "run_applescript",
-    "activate_app",
-    "keystroke",
-    "key_code",
-    "send_text",
-    "press_return",
-    # Ghostty control
-    "ghostty_new_window",
-    "ghostty_split_right",
-    "ghostty_split_down",
-    "ghostty_focus_direction",
-    "ghostty_close_pane",
-    "ghostty_run_command",
-    "ghostty_get_front_window_id",
-    "ghostty_close_window_by_id",
+    # tmux control
+    "run_tmux",
+    "session_exists",
+    "create_session",
+    "split_pane_horizontal",
+    "split_pane_vertical",
+    "select_pane",
+    "send_keys",
+    "kill_pane",
+    "kill_session",
+    "attach_session",
+    "focus_pane_direction",
     # Layout
     "create_layout",
     "start_agents_in_panes",
-    # Zed integration
-    "launch_zed_with_terminal",
-    "position_windows_fill_screen",
     # Subcommand handlers
     "cmd_spawn",
+    "cmd_attach",
     "cmd_send",
     "cmd_broadcast",
     "cmd_focus",

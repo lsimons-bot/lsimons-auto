@@ -29,16 +29,32 @@ class TestArgparseSubcommands(unittest.TestCase):
         self.assertEqual(args.subagents, 1)
         self.assertEqual(args.command, "claude")
         self.assertFalse(args.no_zed)
+        self.assertFalse(args.no_attach)
 
     def test_spawn_with_all_options(self) -> None:
         """Test spawn with all options."""
         parser = cli.create_parser()
         args = parser.parse_args(
-            ["spawn", "lsimons", "auto", "-n", "3", "-c", "pi", "--no-zed"]
+            ["spawn", "lsimons", "auto", "-n", "3", "-c", "pi", "--no-zed", "--no-attach"]
         )
         self.assertEqual(args.subagents, 3)
         self.assertEqual(args.command, "pi")
         self.assertTrue(args.no_zed)
+        self.assertTrue(args.no_attach)
+
+    def test_attach_subcommand(self) -> None:
+        """Test attach subcommand parsing."""
+        parser = cli.create_parser()
+        args = parser.parse_args(["attach", "test-session"])
+        self.assertEqual(args.subcommand, "attach")
+        self.assertEqual(args.session, "test-session")
+
+    def test_attach_default_session(self) -> None:
+        """Test attach with default session (most recent)."""
+        parser = cli.create_parser()
+        args = parser.parse_args(["attach"])
+        self.assertEqual(args.subcommand, "attach")
+        self.assertIsNone(args.session)
 
     def test_send_subcommand(self) -> None:
         """Test send subcommand parsing."""
@@ -114,6 +130,7 @@ class TestCLIHelp(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("spawn", result.stdout)
+        self.assertIn("attach", result.stdout)
         self.assertIn("send", result.stdout)
         self.assertIn("broadcast", result.stdout)
         self.assertIn("focus", result.stdout)
@@ -132,6 +149,7 @@ class TestCLIHelp(unittest.TestCase):
         self.assertIn("--subagents", result.stdout)
         self.assertIn("--command", result.stdout)
         self.assertIn("--no-zed", result.stdout)
+        self.assertIn("--no-attach", result.stdout)
 
     def test_cli_list_help(self) -> None:
         """Test list subcommand help."""

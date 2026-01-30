@@ -1,11 +1,10 @@
 """
 agent_impl - Implementation package for the agent action.
 
-This package provides multi-agent Claude Code session management for Ghostty.
+This package provides multi-agent Claude Code session management using tmux.
 """
 
 from .cli import create_parser, main
-from .ghostty import APPLESCRIPT_DELAY, run_applescript
 from .session import (
     SESSIONS_DIR,
     AgentPane,
@@ -35,7 +34,4 @@ __all__ = [
     # Worktree management
     "ensure_worktrees_dir",
     "ensure_worktree",
-    # AppleScript helpers
-    "run_applescript",
-    "APPLESCRIPT_DELAY",
 ]

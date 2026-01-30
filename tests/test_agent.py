@@ -13,13 +13,13 @@ from tests.agent_impl.test_cli import (
     TestCLIHelp,
     TestCmdList,
 )
-from tests.agent_impl.test_ghostty import TestAppleScriptHelpers
 from tests.agent_impl.test_session import (
     TestAgentPaneWorktreePath,
     TestFindPaneByTarget,
     TestListSessions,
     TestSessionManagement,
 )
+from tests.agent_impl.test_tmux import TestTmuxHelpers
 from tests.agent_impl.test_workspace import TestFuzzyMatching, TestWorkspaceDiscovery
 from tests.agent_impl.test_worktree import TestWorktreeFunctions
 
@@ -32,8 +32,8 @@ __all__ = [
     "TestListSessions",
     "TestFindPaneByTarget",
     "TestAgentPaneWorktreePath",
-    # Ghostty tests
-    "TestAppleScriptHelpers",
+    # tmux tests
+    "TestTmuxHelpers",
     # CLI tests
     "TestArgparseSubcommands",
     "TestCLIHelp",

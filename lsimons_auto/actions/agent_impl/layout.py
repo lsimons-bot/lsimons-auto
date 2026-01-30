@@ -1,21 +1,19 @@
 """
-layout.py - Ghostty pane layout creation and agent startup.
+layout.py - tmux pane layout creation and agent startup.
 
-Creates multi-pane Ghostty layouts with git worktrees for isolated agent sessions.
+Creates multi-pane tmux layouts with git worktrees for isolated agent sessions.
 """
 
-import time
 from pathlib import Path
 
-from .ghostty import (
-    activate_app,
-    ghostty_focus_direction,
-    ghostty_new_window,
-    ghostty_run_command,
-    ghostty_split_down,
-    ghostty_split_right,
-)
 from .session import AgentPane
+from .tmux import (
+    create_session,
+    select_pane,
+    send_keys,
+    split_pane_horizontal,
+    split_pane_vertical,
+)
 from .worktree import ensure_worktree, ensure_worktrees_dir
 
 
@@ -24,9 +22,10 @@ def create_layout(
     workspace_path: Path,
     command: str,
     repo_name: str,
+    tmux_session_name: str,
 ) -> list[AgentPane]:
     """
-    Create Ghostty layout with main + subagent panes.
+    Create tmux layout with main + subagent panes.
 
     Each pane gets its own git worktree for isolated work:
     - Main pane: {repo}-worktrees/M
@@ -37,25 +36,21 @@ def create_layout(
         workspace_path: Path to the original git repository
         command: Agent command to run (e.g., "claude")
         repo_name: Name of the repository
+        tmux_session_name: Name for the tmux session
 
     Returns:
-        List of AgentPane objects with worktree paths
+        List of AgentPane objects with worktree paths and tmux pane IDs
     """
     panes: list[AgentPane] = []
 
     # Create worktrees directory
     worktrees_dir = ensure_worktrees_dir(workspace_path)
 
-    # Launch Ghostty with new window
-    activate_app("Ghostty")
-    ghostty_new_window()
-
     # Create worktree for main pane
     main_worktree = ensure_worktree(workspace_path, "M", worktrees_dir)
 
-    # Change to worktree directory and clear screen
-    ghostty_run_command(f"cd {main_worktree}")
-    ghostty_run_command("clear")
+    # Create tmux session with main pane
+    main_pane_id = create_session(tmux_session_name, main_worktree)
 
     # Main pane
     main_pane = AgentPane(
@@ -64,6 +59,7 @@ def create_layout(
         command=command,
         is_main=True,
         worktree_path=str(main_worktree),
+        tmux_pane_id=main_pane_id,
     )
     panes.append(main_pane)
 
@@ -71,10 +67,8 @@ def create_layout(
         # Create worktree for first subagent
         worktree_001 = ensure_worktree(workspace_path, "001", worktrees_dir)
 
-        # Split right for first subagent
-        ghostty_split_right()
-        ghostty_run_command(f"cd {worktree_001}")
-        ghostty_run_command("clear")
+        # Split right for first subagent (horizontal split from main)
+        pane_001_id = split_pane_horizontal(main_pane_id, worktree_001)
         panes.append(
             AgentPane(
                 id=f"001-{repo_name}",
@@ -82,6 +76,7 @@ def create_layout(
                 command=command,
                 is_main=False,
                 worktree_path=str(worktree_001),
+                tmux_pane_id=pane_001_id,
             )
         )
 
@@ -89,10 +84,8 @@ def create_layout(
         # Create worktree for second subagent
         worktree_002 = ensure_worktree(workspace_path, "002", worktrees_dir)
 
-        # Split down for second subagent
-        ghostty_split_down()
-        ghostty_run_command(f"cd {worktree_002}")
-        ghostty_run_command("clear")
+        # Split down from pane 001 (vertical split)
+        pane_002_id = split_pane_vertical(panes[1].tmux_pane_id, worktree_002)  # type: ignore[arg-type]
         panes.append(
             AgentPane(
                 id=f"002-{repo_name}",
@@ -100,6 +93,7 @@ def create_layout(
                 command=command,
                 is_main=False,
                 worktree_path=str(worktree_002),
+                tmux_pane_id=pane_002_id,
             )
         )
 
@@ -107,10 +101,8 @@ def create_layout(
         # Create worktree for third subagent
         worktree_003 = ensure_worktree(workspace_path, "003", worktrees_dir)
 
-        # Split down again for third subagent
-        ghostty_split_down()
-        ghostty_run_command(f"cd {worktree_003}")
-        ghostty_run_command("clear")
+        # Split down from pane 002 (vertical split)
+        pane_003_id = split_pane_vertical(panes[2].tmux_pane_id, worktree_003)  # type: ignore[arg-type]
         panes.append(
             AgentPane(
                 id=f"003-{repo_name}",
@@ -118,34 +110,29 @@ def create_layout(
                 command=command,
                 is_main=False,
                 worktree_path=str(worktree_003),
+                tmux_pane_id=pane_003_id,
             )
         )
 
     if num_subagents >= 4:
-        # Get existing worktree path for pane 3 and create worktree for fourth subagent
-        # worktree_003 was created in the num_subagents >= 3 block above
-        worktree_003_path = worktrees_dir / "003"
+        # Create worktrees for panes 3 and 4
+        worktree_003 = worktrees_dir / "003"
         worktree_004 = ensure_worktree(workspace_path, "004", worktrees_dir)
 
-        # For 4 subagents: focus up to s1, split right, split down
-        # Current layout: main | s1/s2/s3
-        # Target: main | s1/s2 | s3/s4
-        ghostty_focus_direction("up")
-        ghostty_focus_direction("up")  # Now at s1
-        ghostty_split_right()
-        ghostty_run_command(f"cd {worktree_003_path}")
-        ghostty_run_command("clear")
-        # Re-assign pane 3 with correct worktree
+        # For 4 subagents: main | s1/s2 | s3/s4
+        # Split pane 001 horizontally to create right column
+        pane_003_id = split_pane_horizontal(panes[1].tmux_pane_id, worktree_003)  # type: ignore[arg-type]
+        # Re-assign pane 3 with correct tmux pane ID
         panes[3] = AgentPane(
             id=f"003-{repo_name}",
             pane_index=3,
             command=command,
             is_main=False,
-            worktree_path=str(worktree_003_path),
+            worktree_path=str(worktree_003),
+            tmux_pane_id=pane_003_id,
         )
-        ghostty_split_down()
-        ghostty_run_command(f"cd {worktree_004}")
-        ghostty_run_command("clear")
+        # Split pane 003 vertically for pane 004
+        pane_004_id = split_pane_vertical(pane_003_id, worktree_004)
         panes.append(
             AgentPane(
                 id=f"004-{repo_name}",
@@ -153,62 +140,23 @@ def create_layout(
                 command=command,
                 is_main=False,
                 worktree_path=str(worktree_004),
+                tmux_pane_id=pane_004_id,
             )
         )
+
+    # Focus back to main pane
+    select_pane(main_pane_id)
 
     return panes
 
 
-def start_agents_in_panes(panes: list[AgentPane], num_subagents: int) -> None:
+def start_agents_in_panes(panes: list[AgentPane]) -> None:
     """
-    Navigate to each pane and start the agent command.
+    Start the agent command in each pane using tmux send-keys.
 
     Args:
-        panes: List of AgentPane objects
-        num_subagents: Number of subagent panes
+        panes: List of AgentPane objects with tmux_pane_id set
     """
-    # Give Ghostty time to be ready after app switch
-    time.sleep(0.5)
-
-    # Navigate to main pane first (keep going left)
-    # Use Cmd+Opt+Left which is Ghostty's goto_split:left
-    for _ in range(3):  # Enough to reach leftmost from any position
-        ghostty_focus_direction("left")
-        time.sleep(0.2)
-
-    # Start main agent
-    time.sleep(0.3)
-    ghostty_run_command(panes[0].command)
-
-    if num_subagents == 1:
-        # Layout: main | s1
-        ghostty_focus_direction("right")
-        ghostty_run_command(panes[1].command)
-
-    elif num_subagents == 2:
-        # Layout: main | s1/s2
-        ghostty_focus_direction("right")
-        ghostty_run_command(panes[1].command)
-        ghostty_focus_direction("down")
-        ghostty_run_command(panes[2].command)
-
-    elif num_subagents == 3:
-        # Layout: main | s1/s2/s3
-        ghostty_focus_direction("right")
-        ghostty_run_command(panes[1].command)
-        ghostty_focus_direction("down")
-        ghostty_run_command(panes[2].command)
-        ghostty_focus_direction("down")
-        ghostty_run_command(panes[3].command)
-
-    elif num_subagents == 4:
-        # Layout: main | s1/s2 | s3/s4
-        ghostty_focus_direction("right")
-        ghostty_run_command(panes[1].command)
-        ghostty_focus_direction("down")
-        ghostty_run_command(panes[2].command)
-        ghostty_focus_direction("up")
-        ghostty_focus_direction("right")
-        ghostty_run_command(panes[3].command)
-        ghostty_focus_direction("down")
-        ghostty_run_command(panes[4].command)
+    for pane in panes:
+        if pane.tmux_pane_id:
+            send_keys(pane.tmux_pane_id, pane.command, enter=True)
