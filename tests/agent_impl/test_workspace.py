@@ -58,6 +58,19 @@ class TestWorkspaceDiscovery(unittest.TestCase):
         workspaces = workspace.discover_workspaces(Path("/nonexistent/path"))
         self.assertEqual(workspaces, {})
 
+    def test_discover_workspaces_ignores_worktrees(self) -> None:
+        """Test workspace discovery ignores -worktrees directories."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            git_root = Path(tmpdir)
+            (git_root / "org1" / "myrepo").mkdir(parents=True)
+            (git_root / "org1" / "myrepo-worktrees").mkdir(parents=True)
+
+            workspaces = workspace.discover_workspaces(git_root)
+
+            self.assertIn("org1", workspaces)
+            self.assertIn("myrepo", workspaces["org1"])
+            self.assertNotIn("myrepo-worktrees", workspaces["org1"])
+
 
 class TestFuzzyMatching(unittest.TestCase):
     """Test fuzzy matching functionality."""

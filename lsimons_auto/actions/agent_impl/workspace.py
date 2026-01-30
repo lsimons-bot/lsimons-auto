@@ -33,7 +33,11 @@ def discover_workspaces(
 
         repos: dict[str, Path] = {}
         for repo_dir in org_dir.iterdir():
-            if repo_dir.is_dir() and not repo_dir.name.startswith("."):
+            if (
+                repo_dir.is_dir()
+                and not repo_dir.name.startswith(".")
+                and not repo_dir.name.endswith("-worktrees")
+            ):
                 repos[repo_dir.name] = repo_dir
 
         if repos:
