@@ -17,5 +17,10 @@
     <string>/Users/lsimons/.local/log/gdrive-sync.log</string>
     <key>StandardErrorPath</key>
     <string>/Users/lsimons/.local/log/gdrive-sync-error.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/lsimons/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
 </dict>
 </plist>
