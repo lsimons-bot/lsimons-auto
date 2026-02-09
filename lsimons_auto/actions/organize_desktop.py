@@ -21,7 +21,7 @@ def get_creation_date(file_path: Path) -> datetime:
     file_stat = file_path.stat()
 
     # macOS: use birth time if available, fallback to change time
-    timestamp = file_stat.st_birthtime if hasattr(file_stat, "st_birthtime") else file_stat.st_ctime
+    timestamp: float = getattr(file_stat, "st_birthtime", file_stat.st_ctime)
 
     return datetime.fromtimestamp(timestamp)
 
