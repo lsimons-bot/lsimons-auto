@@ -154,7 +154,7 @@ def ghostty_get_front_window_id() -> int | None:
         result = run_applescript(script)
         if result:
             return int(result)
-    except (ValueError, RuntimeError):
+    except ValueError, RuntimeError:
         pass
     return None
 

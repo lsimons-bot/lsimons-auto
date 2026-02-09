@@ -6,7 +6,7 @@ Personal automation toolkit for macOS with modular CLI (`auto`) and daily routin
 
 - **Install**: `python3 install.py`
 - **Test**: `uv run pytest` (unit tests) or `uv run pytest -m integration` (integration tests)
-- **Lint**: `pyright`
+- **Lint**: `uv run basedpyright`
 - **Run**: `auto <action_name>` or `start-the-day`
 
 ## Structure
@@ -21,7 +21,7 @@ Actions live in `lsimons_auto/actions/`. Each is a self-contained Python script 
 ## Guidelines
 
 **Code quality:**
-- Full type annotations (strict pyright)
+- Full type annotations (strict basedpyright)
 - PEP 8 formatting
 - Unit tests (fast, no side effects) run by default
 - Integration tests marked with `@pytest.mark.integration`
@@ -47,7 +47,7 @@ Work is NOT complete until `git push` succeeds.
 1. **Quality gates** (if code changed):
    ```bash
    uv run pytest
-   pyright
+   uv run basedpyright
    ```
 
 2. **Push**:

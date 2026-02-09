@@ -38,7 +38,7 @@ class AgentSession:
     tmux_session_name: str | None = None  # tmux session name
 
     @classmethod
-    def load(cls, session_id: str) -> "AgentSession":
+    def load(cls, session_id: str) -> AgentSession:
         """Load session from disk."""
         session_file = SESSIONS_DIR / f"{session_id}.json"
         if not session_file.exists():
@@ -72,7 +72,7 @@ def list_sessions() -> list[AgentSession]:
         try:
             session = AgentSession.load(session_file.stem)
             sessions.append(session)
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             continue
 
     return sessions

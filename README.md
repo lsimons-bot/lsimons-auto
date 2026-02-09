@@ -134,7 +134,7 @@ This project follows a spec-based development approach documented in [`docs/spec
 - See [DESIGN.md](DESIGN.md) for architectural decisions and design rationale
 - Reference spec numbers in commit messages during feature implementation
 - Run tests after changes: `uv run pytest`
-- Run type checking: `uv run pyright`
+- Run type checking: `uv run basedpyright`
 
 ### Adding New Actions
 1. Create specification in `docs/spec/` following the established template
@@ -201,7 +201,7 @@ Follow the pattern in existing action scripts:
 
 ## Dependencies
 
-- **Python 3.13+** with `uv` package manager
+- **Python 3.14+** with `uv` package manager
 - **macOS** (required for LaunchAgent automation and desktop management)
 - **Pillow** - Image generation and processing
 - **System fonts** - Monospace fonts for desktop background generation

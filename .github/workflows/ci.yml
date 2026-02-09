@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -42,8 +42,8 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check .
 
-      - name: Run pyright type checking
-        run: uv run pyright
+      - name: Run basedpyright type checking
+        run: uv run basedpyright
 
       - name: Run pytest (unit tests only)
         run: uv run pytest

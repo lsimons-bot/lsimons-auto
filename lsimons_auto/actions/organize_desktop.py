@@ -43,10 +43,10 @@ def set_directory_timestamps(directory: Path, target_date: datetime) -> None:
                     check=False,
                     capture_output=True,
                 )
-            except (subprocess.SubprocessError, FileNotFoundError):
+            except subprocess.SubprocessError, FileNotFoundError:
                 # If touch command fails, continue without birth time setting
                 pass
-    except (OSError, ValueError):
+    except OSError, ValueError:
         # If timestamp setting fails, continue without error
         pass
 

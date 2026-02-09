@@ -224,7 +224,7 @@ def get_user_forks(username: str) -> dict[str, str]:
         return fork_map
     except subprocess.CalledProcessError:
         return {}
-    except (json.JSONDecodeError, KeyError):
+    except json.JSONDecodeError, KeyError:
         return {}
 
 

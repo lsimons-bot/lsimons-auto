@@ -7,7 +7,7 @@ name = "lsimons_auto"
 version = "0.1.0"
 description = "A lightweight daily startup script for macOS that helps you establish consistent morning routines"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "pillow>=10.0.0",
 ]
@@ -25,21 +25,22 @@ exclude = ["etc*"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B", "SIM"]
 
-[tool.pyright]
-pythonVersion = "3.13"
+[tool.basedpyright]
+pythonVersion = "3.14"
 typeCheckingMode = "strict"
+reportDeprecated = false
 
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=7.0.0",
     "ruff>=0.8.0",
-    "pyright>=1.1.390",
+    "basedpyright>=1.22.0",
 ]
 
 [tool.pytest.ini_options]
