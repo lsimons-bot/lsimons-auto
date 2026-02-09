@@ -14,19 +14,14 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
 
 
 def get_creation_date(file_path: Path) -> datetime:
     """Get file creation date, with fallback handling."""
     file_stat = file_path.stat()
 
-    # macOS: use birth time if available
-    if hasattr(file_stat, "st_birthtime"):
-        timestamp = file_stat.st_birthtime
-    else:
-        # Fallback to change time
-        timestamp = file_stat.st_ctime
+    # macOS: use birth time if available, fallback to change time
+    timestamp = file_stat.st_birthtime if hasattr(file_stat, "st_birthtime") else file_stat.st_ctime
 
     return datetime.fromtimestamp(timestamp)
 
@@ -63,7 +58,7 @@ def ensure_date_directory(base_path: Path, date_obj: datetime) -> Path:
     day_dir = month_dir / f"{date_obj.day:02d}"
 
     # Track which directories we create to set timestamps
-    created_dirs: list[Tuple[str, Path]] = []
+    created_dirs: list[tuple[str, Path]] = []
 
     if not year_dir.exists():
         year_dir.mkdir(exist_ok=True)
@@ -187,12 +182,11 @@ def organize_file(file_path: Path, target_dir: Path, dry_run: bool = False) -> N
 
         if is_cleanshot_image(file_path):
             print(
-                f"Would compress and move: {filename} -> {relative_path}/{file_path.stem}_compressed.jpg"
+                f"Would compress and move: {filename}"
+                f" -> {relative_path}/{file_path.stem}_compressed.jpg"
             )
         elif file_path.suffix.lower() == ".txt":
-            print(
-                f"Would convert and move: {filename} -> {relative_path}/{file_path.stem}.md"
-            )
+            print(f"Would convert and move: {filename} -> {relative_path}/{file_path.stem}.md")
         else:
             print(f"Would move: {filename} -> {relative_path}/{filename}")
         return
@@ -241,9 +235,7 @@ def organize_directory(dir_path: Path, target_dir: Path, dry_run: bool = False) 
         except ValueError:
             # For test cases or when not under ~/Desktop
             relative_path = target_dir.name
-        print(
-            f"Would move directory: {dir_path.name} -> {relative_path}/{dir_path.name}"
-        )
+        print(f"Would move directory: {dir_path.name} -> {relative_path}/{dir_path.name}")
         return
 
     try:
@@ -266,9 +258,7 @@ def organize_directory(dir_path: Path, target_dir: Path, dry_run: bool = False) 
         print(f"Error organizing directory {dir_path.name}: {e}")
 
 
-def organize_single_item(
-    item_path: Path, base_path: Path, dry_run: bool = False
-) -> None:
+def organize_single_item(item_path: Path, base_path: Path, dry_run: bool = False) -> None:
     """Organize a single file or directory."""
     creation_date = get_creation_date(item_path)
     target_dir = ensure_date_directory(base_path, creation_date)
@@ -327,14 +317,12 @@ def organize_desktop_items(dry_run: bool = False) -> None:
             continue
 
     if not dry_run:
-        print(
-            f"\nOrganization completed: {organized_count} items organized, {error_count} errors"
-        )
+        print(f"\nOrganization completed: {organized_count} items organized, {error_count} errors")
     else:
         print(f"\nDry run completed: {organized_count} items would be organized")
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main function to organize desktop."""
     parser = argparse.ArgumentParser(
         description="Organize desktop files into date-based directory structure"

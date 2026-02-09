@@ -8,18 +8,18 @@ and only when the target volume is mounted.
 """
 
 import argparse
-import sys
-import socket
 import os
 import shutil
+import socket
 import subprocess
-from typing import Optional
+import sys
 
-def main(args: Optional[list[str]] = None) -> None:
+
+def main(args: list[str] | None = None) -> None:
     """Main function that performs the action work."""
     parser = argparse.ArgumentParser(description="Sync Google Drive to local volume")
     _ = parser.parse_args(args)
-    
+
     # 1. Check Hostname
     hostname = socket.gethostname()
     if hostname.lower() != "paddo":
@@ -38,11 +38,11 @@ def main(args: Optional[list[str]] = None) -> None:
     # 3. Check rclone availability
     # Use absolute path since launchd environment doesn't have full PATH
     rclone_path = "/opt/homebrew/bin/rclone"
-    
+
     # Fallback to shutil.which if absolute path doesn't exist (e.g. non-Apple Silicon Mac)
     if not os.path.exists(rclone_path):
         rclone_path = shutil.which("rclone")
-    
+
     if not rclone_path:
         print("Error: rclone is not installed or not in PATH.")
         sys.exit(1)
@@ -50,16 +50,13 @@ def main(args: Optional[list[str]] = None) -> None:
     # 4. Execute Sync
     source = "gdrive:"
     destination = os.path.join(target_volume, "Google Drive")
-    
+
     print(f"Syncing {source} to {destination}...")
-    
+
     try:
         # Using subprocess to call rclone
         # We allow stdout/stderr to flow to the console
-        subprocess.run(
-            [rclone_path, "sync", source, destination, "--verbose"],
-            check=True
-        )
+        subprocess.run([rclone_path, "sync", source, destination, "--verbose"], check=True)
         print("Sync completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error executing rclone: {e}")
@@ -67,6 +64,7 @@ def main(args: Optional[list[str]] = None) -> None:
     except Exception as e:
         print(f"Unexpected error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

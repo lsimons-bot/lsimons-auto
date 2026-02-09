@@ -25,17 +25,13 @@ class TestLaunchApps(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up test environment."""
         cls.project_root = Path.home() / "dev" / "lsimons-auto"
-        cls.launch_apps_script = (
-            cls.project_root / "lsimons_auto" / "actions" / "launch_apps.py"
-        )
+        cls.launch_apps_script = cls.project_root / "lsimons_auto" / "actions" / "launch_apps.py"
 
         # Verify test environment
         if not cls.project_root.exists():
             raise unittest.SkipTest(f"Project root not found: {cls.project_root}")
         if not cls.launch_apps_script.exists():
-            raise unittest.SkipTest(
-                f"Launch apps script not found: {cls.launch_apps_script}"
-            )
+            raise unittest.SkipTest(f"Launch apps script not found: {cls.launch_apps_script}")
 
     def test_launch_apps_cli_help(self) -> None:
         """Test command line interface help output."""
@@ -59,9 +55,7 @@ class TestLaunchApps(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("Configured launch commands for host", result.stdout)
-        self.assertIn(
-            "open -g -a /System/Applications/TextEdit.app ~/scratch.txt", result.stdout
-        )
+        self.assertIn("open -g -a /System/Applications/TextEdit.app ~/scratch.txt", result.stdout)
 
     @patch("lsimons_auto.actions.launch_apps.subprocess.Popen")
     def test_launch_command_success(self, mock_popen: MagicMock) -> None:
@@ -121,7 +115,9 @@ class TestLaunchApps(unittest.TestCase):
 
     @patch("lsimons_auto.actions.launch_apps.launch_command")
     @patch("lsimons_auto.actions.launch_apps.get_launch_commands")
-    def test_launch_all_apps_success(self, mock_get_commands: MagicMock, mock_launch_command: MagicMock) -> None:
+    def test_launch_all_apps_success(
+        self, mock_get_commands: MagicMock, mock_launch_command: MagicMock
+    ) -> None:
         """Test launching all configured apps successfully."""
         mock_get_commands.return_value = launch_apps.DEFAULT_COMMANDS
         mock_launch_command.return_value = True
@@ -131,9 +127,7 @@ class TestLaunchApps(unittest.TestCase):
             launch_apps.launch_all_apps()
 
         # Verify launch_command was called for each configured command
-        self.assertEqual(
-            mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS)
-        )
+        self.assertEqual(mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS))
 
     @patch("lsimons_auto.actions.launch_apps.launch_command")
     @patch("lsimons_auto.actions.launch_apps.get_launch_commands")
@@ -151,9 +145,7 @@ class TestLaunchApps(unittest.TestCase):
             launch_apps.launch_all_apps()
 
         # Verify launch_command was called for each configured command
-        self.assertEqual(
-            mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS)
-        )
+        self.assertEqual(mock_launch_command.call_count, len(launch_apps.DEFAULT_COMMANDS))
 
     def test_main_with_list_argument(self) -> None:
         """Test main function with --list argument."""

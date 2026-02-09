@@ -88,8 +88,8 @@ class TestInstallScript(unittest.TestCase):
 
     def test_wrapper_script_content_format(self):
         """Test that wrapper scripts have correct bash format."""
-        import tempfile
         import importlib.util
+        import tempfile
 
         spec = importlib.util.spec_from_file_location("install", self.install_script)
         if spec is None or spec.loader is None:
@@ -105,9 +105,7 @@ class TestInstallScript(unittest.TestCase):
             target_script.touch()
             wrapper_path = Path(tmpdir) / "wrapper"
 
-            install_module.install_wrapper_script(
-                venv_python, target_script, wrapper_path
-            )
+            install_module.install_wrapper_script(venv_python, target_script, wrapper_path)
 
             # Verify wrapper was created
             self.assertTrue(wrapper_path.exists())
@@ -125,8 +123,8 @@ class TestInstallScript(unittest.TestCase):
 
     def test_wrapper_script_idempotent(self):
         """Test that installing wrapper script twice doesn't fail."""
-        import tempfile
         import importlib.util
+        import tempfile
 
         spec = importlib.util.spec_from_file_location("install", self.install_script)
         if spec is None or spec.loader is None:
@@ -143,15 +141,11 @@ class TestInstallScript(unittest.TestCase):
             wrapper_path = Path(tmpdir) / "wrapper"
 
             # Install once
-            install_module.install_wrapper_script(
-                venv_python, target_script, wrapper_path
-            )
+            install_module.install_wrapper_script(venv_python, target_script, wrapper_path)
             content1 = wrapper_path.read_text()
 
             # Install again
-            install_module.install_wrapper_script(
-                venv_python, target_script, wrapper_path
-            )
+            install_module.install_wrapper_script(venv_python, target_script, wrapper_path)
             content2 = wrapper_path.read_text()
 
             # Should be identical

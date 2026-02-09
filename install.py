@@ -45,17 +45,13 @@ def install_scripts() -> None:
         print(f"Directory already exists: {local_bin_dir}")
 
     # Install start-the-day wrapper script
-    install_wrapper_script(
-        venv_python, start_the_day_path, local_bin_dir / "start-the-day"
-    )
+    install_wrapper_script(venv_python, start_the_day_path, local_bin_dir / "start-the-day")
 
     # Install auto wrapper script
     install_wrapper_script(venv_python, lsimons_auto_path, local_bin_dir / "auto")
 
 
-def install_wrapper_script(
-    venv_python: Path, target_script: Path, wrapper_path: Path
-) -> None:
+def install_wrapper_script(venv_python: Path, target_script: Path, wrapper_path: Path) -> None:
     """Install a wrapper script that uses the project's virtual environment Python."""
     # Create wrapper script content
     wrapper_content = f"""#!/bin/bash
@@ -94,13 +90,10 @@ def install_launch_agent() -> None:
 
     # Get the absolute path to the plist template
     script_dir = Path(__file__).parent.absolute()
-    
+
     # List of plist templates to install
-    plist_files = [
-        "com.leosimons.start-the-day.plist",
-        "com.leosimons.gdrive-sync.plist"
-    ]
-    
+    plist_files = ["com.leosimons.start-the-day.plist", "com.leosimons.gdrive-sync.plist"]
+
     launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
     if not launch_agents_dir.exists():
         print(f"Creating directory: {launch_agents_dir}")
@@ -142,16 +135,10 @@ def main() -> None:
     install_launch_agent()
 
     print("\nInstallation completed successfully!")
-    print(
-        "- You can now run 'start-the-day' from anywhere (if ~/.local/bin is in your PATH)"
-    )
+    print("- You can now run 'start-the-day' from anywhere (if ~/.local/bin is in your PATH)")
     print("- You can now run 'auto' from anywhere (if ~/.local/bin is in your PATH)")
-    print(
-        "- Scripts use project virtual environment to ensure dependencies are available"
-    )
-    print(
-        "- The start-the-day script will automatically run daily at 7:00 AM via LaunchAgent"
-    )
+    print("- Scripts use project virtual environment to ensure dependencies are available")
+    print("- The start-the-day script will automatically run daily at 7:00 AM via LaunchAgent")
     print("- Logs will be written to ~/.local/log/start-the-day.log")
     print("- Use 'auto --help' to see available actions")
 

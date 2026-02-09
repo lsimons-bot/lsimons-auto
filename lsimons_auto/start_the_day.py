@@ -5,11 +5,11 @@ start_the_day.py - A lightweight daily startup script for macOS
 See AGENTS.md for agent instructions and DESIGN.md for design decisions.
 """
 
-import os
-import sys
-import datetime
 import argparse
+import datetime
+import os
 import subprocess
+import sys
 
 
 def get_config_path(test_mode: bool = False) -> str:
@@ -24,12 +24,11 @@ def parse_toml_simple(content: str) -> dict[str, str]:
     config: dict[str, str] = {}
     for line in content.strip().split("\n"):
         line = line.strip()
-        if line and not line.startswith("#"):
-            if "=" in line:
-                key, value = line.split("=", 1)
-                key = key.strip().strip("\"'")
-                value = value.strip().strip("\"'")
-                config[key] = value
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            key = key.strip().strip("\"'")
+            value = value.strip().strip("\"'")
+            config[key] = value
     return config
 
 
@@ -55,10 +54,10 @@ def load_execution_state(test_mode: bool = False) -> dict[str, str]:
         return {}
 
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             content = f.read()
         return parse_toml_simple(content)
-    except (IOError, OSError) as e:
+    except OSError as e:
         print(f"Warning: Could not read config file {config_path}: {e}")
         return {}
 
@@ -71,7 +70,7 @@ def save_execution_state(config: dict[str, str], test_mode: bool = False) -> Non
         # Ensure the directory exists
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
         write_toml_simple(config, config_path)
-    except (IOError, OSError) as e:
+    except OSError as e:
         print(f"Error: Could not write config file {config_path}: {e}")
         sys.exit(1)
 
@@ -161,9 +160,7 @@ def start_the_day() -> None:
 
 def main() -> None:
     """Main entry point with argument parsing."""
-    print(
-        f"Current date and time (UTC): {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
-    )
+    print(f"Current date and time (UTC): {datetime.datetime.now(datetime.UTC).isoformat()}")
 
     parser = argparse.ArgumentParser(description="Daily startup script for macOS")
 

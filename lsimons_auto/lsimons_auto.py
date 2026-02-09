@@ -49,9 +49,7 @@ def normalize_action_name(name: str) -> str:
 
 def main() -> None:
     """Main dispatcher function."""
-    parser = argparse.ArgumentParser(
-        description="lsimons-auto command dispatcher", prog="auto"
-    )
+    parser = argparse.ArgumentParser(description="lsimons-auto command dispatcher", prog="auto")
 
     actions = discover_actions()
 

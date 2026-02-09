@@ -31,9 +31,7 @@ class TestTmuxHelpers(unittest.TestCase):
     @patch.object(tmux.subprocess, "run")
     def test_run_tmux_failure(self, mock_run: Mock) -> None:
         """Test tmux command failure handling."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, ["tmux"], stderr="Error message"
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(1, ["tmux"], stderr="Error message")
 
         with self.assertRaises(RuntimeError) as cm:
             tmux.run_tmux("invalid-command")
@@ -120,9 +118,7 @@ class TestTmuxHelpers(unittest.TestCase):
         result = tmux.list_panes("test-session")
 
         self.assertEqual(result, ["%0", "%1", "%2"])
-        mock_run.assert_called_once_with(
-            "list-panes", "-t", "test-session", "-F", "#{pane_id}"
-        )
+        mock_run.assert_called_once_with("list-panes", "-t", "test-session", "-F", "#{pane_id}")
 
     @patch.object(tmux, "run_tmux")
     def test_list_panes_empty(self, mock_run: Mock) -> None:

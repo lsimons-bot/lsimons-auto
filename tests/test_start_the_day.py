@@ -6,26 +6,27 @@ Run with: python3 -m unittest test_start_the_day.py
 Or: python3 test_start_the_day.py
 """
 
-import os
-import sys
 import datetime
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
+
 import pytest
 
 from lsimons_auto.start_the_day import (
+    already_ran_today,
+    colorize_text,
     get_config_path,
-    parse_toml_simple,
     get_today_date,
     load_execution_state,
-    write_toml_simple,
+    parse_toml_simple,
     save_execution_state,
-    already_ran_today,
     update_execution_state,
-    colorize_text,
+    write_toml_simple,
 )
 
 
@@ -95,7 +96,7 @@ class TestStartTheDay(unittest.TestCase):
             write_toml_simple(config, temp_path)
 
             # Read back the file and check content
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 written_content = f.read()
 
             self.assertIn('last_run_date = "2024-01-15"', written_content)
@@ -162,17 +163,13 @@ class TestStartTheDayIntegration(unittest.TestCase):
     def setUpClass(cls):
         """Set up test environment."""
         cls.project_root = Path.home() / "dev" / "lsimons-auto"
-        cls.start_the_day_script = (
-            cls.project_root / "lsimons_auto" / "start_the_day.py"
-        )
+        cls.start_the_day_script = cls.project_root / "lsimons_auto" / "start_the_day.py"
 
         # Verify test environment
         if not cls.project_root.exists():
             raise unittest.SkipTest(f"Project root not found: {cls.project_root}")
         if not cls.start_the_day_script.exists():
-            raise unittest.SkipTest(
-                f"start_the_day script not found: {cls.start_the_day_script}"
-            )
+            raise unittest.SkipTest(f"start_the_day script not found: {cls.start_the_day_script}")
 
     def test_cli_help_output(self):
         """Test command line help output."""

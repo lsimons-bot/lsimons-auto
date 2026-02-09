@@ -244,9 +244,7 @@ class TestOrganizeDesktop(unittest.TestCase):
         self.assertFalse(test_file.exists())
 
     @patch("lsimons_auto.actions.organize_desktop.get_creation_date")
-    def test_organize_file_txt_conversion(
-        self, mock_get_creation_date: MagicMock
-    ) -> None:
+    def test_organize_file_txt_conversion(self, mock_get_creation_date: MagicMock) -> None:
         """Test text file conversion during organization."""
         mock_get_creation_date.return_value = datetime(2024, 3, 15)
 
@@ -306,9 +304,7 @@ class TestOrganizeDesktop(unittest.TestCase):
         self.assertFalse(test_dir.exists())
 
     @patch("lsimons_auto.actions.organize_desktop.get_creation_date")
-    def test_filename_conflict_handling(
-        self, mock_get_creation_date: MagicMock
-    ) -> None:
+    def test_filename_conflict_handling(self, mock_get_creation_date: MagicMock) -> None:
         """Test handling of filename conflicts with non-txt files."""
         mock_get_creation_date.return_value = datetime(2024, 3, 15)
 
@@ -391,9 +387,7 @@ class TestOrganizeDesktop(unittest.TestCase):
             # Should print error message
             mock_print.assert_called()
             error_call = [
-                call
-                for call in mock_print.call_args_list
-                if "Error organizing" in str(call)
+                call for call in mock_print.call_args_list if "Error organizing" in str(call)
             ]
             self.assertTrue(len(error_call) > 0)
 

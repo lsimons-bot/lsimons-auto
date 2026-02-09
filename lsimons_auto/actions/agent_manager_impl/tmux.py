@@ -8,7 +8,6 @@ Replaces AppleScript/Ghostty for reliable operation in VMs.
 import os
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 def run_tmux(*args: str, check: bool = True) -> str:
@@ -24,9 +23,7 @@ def run_tmux(*args: str, check: bool = True) -> str:
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"tmux command failed: {e.stderr}") from e
     except FileNotFoundError:
-        raise RuntimeError(
-            "tmux not found. Install with: brew install tmux"
-        ) from None
+        raise RuntimeError("tmux not found. Install with: brew install tmux") from None
 
 
 def session_exists(session_name: str) -> bool:
@@ -43,15 +40,21 @@ def create_session(session_name: str, working_dir: Path) -> str:
     run_tmux(
         "new-session",
         "-d",  # detached
-        "-s", session_name,
-        "-c", str(working_dir),
-        "-P", "-F", "#{pane_id}",  # print pane ID
+        "-s",
+        session_name,
+        "-c",
+        str(working_dir),
+        "-P",
+        "-F",
+        "#{pane_id}",  # print pane ID
     )
     # Get the pane ID of the initial pane
     pane_id = run_tmux(
         "list-panes",
-        "-t", session_name,
-        "-F", "#{pane_id}",
+        "-t",
+        session_name,
+        "-F",
+        "#{pane_id}",
     )
     return pane_id.split("\n")[0]
 
@@ -61,9 +64,13 @@ def split_window_horizontal(session_name: str, working_dir: Path) -> str:
     output = run_tmux(
         "split-window",
         "-h",  # horizontal split
-        "-t", session_name,
-        "-c", str(working_dir),
-        "-P", "-F", "#{pane_id}",
+        "-t",
+        session_name,
+        "-c",
+        str(working_dir),
+        "-P",
+        "-F",
+        "#{pane_id}",
     )
     return output
 
@@ -73,9 +80,13 @@ def split_window_vertical(session_name: str, working_dir: Path) -> str:
     output = run_tmux(
         "split-window",
         "-v",  # vertical split
-        "-t", session_name,
-        "-c", str(working_dir),
-        "-P", "-F", "#{pane_id}",
+        "-t",
+        session_name,
+        "-c",
+        str(working_dir),
+        "-P",
+        "-F",
+        "#{pane_id}",
     )
     return output
 
@@ -85,9 +96,13 @@ def split_pane_horizontal(pane_id: str, working_dir: Path) -> str:
     output = run_tmux(
         "split-window",
         "-h",
-        "-t", pane_id,
-        "-c", str(working_dir),
-        "-P", "-F", "#{pane_id}",
+        "-t",
+        pane_id,
+        "-c",
+        str(working_dir),
+        "-P",
+        "-F",
+        "#{pane_id}",
     )
     return output
 
@@ -97,9 +112,13 @@ def split_pane_vertical(pane_id: str, working_dir: Path) -> str:
     output = run_tmux(
         "split-window",
         "-v",
-        "-t", pane_id,
-        "-c", str(working_dir),
-        "-P", "-F", "#{pane_id}",
+        "-t",
+        pane_id,
+        "-c",
+        str(working_dir),
+        "-P",
+        "-F",
+        "#{pane_id}",
     )
     return output
 
@@ -137,8 +156,10 @@ def list_panes(session_name: str) -> list[str]:
     """List all pane IDs in a session."""
     output = run_tmux(
         "list-panes",
-        "-t", session_name,
-        "-F", "#{pane_id}",
+        "-t",
+        session_name,
+        "-F",
+        "#{pane_id}",
     )
     if not output:
         return []
@@ -162,8 +183,10 @@ def get_pane_info(session_name: str) -> list[dict[str, str]]:
     """Get detailed info about all panes in a session."""
     output = run_tmux(
         "list-panes",
-        "-t", session_name,
-        "-F", "#{pane_id}:#{pane_index}:#{pane_width}:#{pane_height}",
+        "-t",
+        session_name,
+        "-F",
+        "#{pane_id}:#{pane_index}:#{pane_width}:#{pane_height}",
     )
     if not output:
         return []
@@ -172,12 +195,14 @@ def get_pane_info(session_name: str) -> list[dict[str, str]]:
     for line in output.split("\n"):
         parts = line.split(":")
         if len(parts) >= 4:
-            panes.append({
-                "pane_id": parts[0],
-                "pane_index": parts[1],
-                "width": parts[2],
-                "height": parts[3],
-            })
+            panes.append(
+                {
+                    "pane_id": parts[0],
+                    "pane_index": parts[1],
+                    "width": parts[2],
+                    "height": parts[3],
+                }
+            )
     return panes
 
 
@@ -193,7 +218,7 @@ def is_inside_tmux() -> bool:
     return "TMUX" in os.environ
 
 
-def get_current_session() -> Optional[str]:
+def get_current_session() -> str | None:
     """Get the name of the current tmux session if inside one."""
     if not is_inside_tmux():
         return None

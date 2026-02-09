@@ -7,8 +7,7 @@ Defines the CLI interface for the agent action.
 import argparse
 import subprocess
 import sys
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .layout import create_layout, start_agents_in_panes
 from .session import (
@@ -27,7 +26,6 @@ from .tmux import (
     session_exists,
 )
 from .workspace import discover_workspaces, fuzzy_match_workspace
-
 
 # =============================================================================
 # Subcommand Handlers
@@ -49,15 +47,13 @@ def cmd_spawn(args: argparse.Namespace) -> None:
     print(f"Workspace: {org}/{repo} ({workspace_path})")
 
     # Generate session ID and tmux session name
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     session_id = f"auto-agent-{timestamp}"
     tmux_session_name = session_id  # Use same name for tmux session
 
     # Create layout (this also creates worktrees and tmux session)
     print(f"Creating layout with {args.subagents} subagent(s)...")
-    panes = create_layout(
-        args.subagents, workspace_path, args.command, repo, tmux_session_name
-    )
+    panes = create_layout(args.subagents, workspace_path, args.command, repo, tmux_session_name)
 
     # Launch Zed if requested (opens original repo, not worktrees)
     if not args.no_zed:
@@ -81,7 +77,7 @@ def cmd_spawn(args: argparse.Namespace) -> None:
         workspace_path=str(workspace_path),
         repo_name=repo,
         org_name=org,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         panes=panes,
         tmux_session_name=tmux_session_name,
     )
@@ -216,10 +212,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
     for session in sessions:
         # Check if tmux session still exists
-        tmux_active = (
-            session.tmux_session_name
-            and session_exists(session.tmux_session_name)
-        )
+        tmux_active = session.tmux_session_name and session_exists(session.tmux_session_name)
         status = "" if tmux_active else " (tmux session gone)"
 
         if args.verbose:
@@ -307,7 +300,7 @@ def cmd_kill(args: argparse.Namespace) -> None:
         kill_session(session.tmux_session_name)
         print(f"Killed tmux session: {session.tmux_session_name}")
     else:
-        print(f"tmux session not found (may already be closed)")
+        print("tmux session not found (may already be closed)")
 
     # Delete session file
     session.delete()
@@ -383,26 +376,18 @@ def create_parser() -> argparse.ArgumentParser:
 
     # attach subcommand
     attach_parser = subparsers.add_parser("attach", help="Attach to existing session")
-    attach_parser.add_argument(
-        "session", nargs="?", help="Session ID (default: most recent)"
-    )
+    attach_parser.add_argument("session", nargs="?", help="Session ID (default: most recent)")
 
     # send subcommand
     send_parser = subparsers.add_parser("send", help="Send text to specific agent")
     send_parser.add_argument("target", help="Agent ID, pane index, or 'main'")
     send_parser.add_argument("text", nargs="+", help="Text to send")
-    send_parser.add_argument(
-        "--session", "-s", help="Session ID (default: most recent)"
-    )
+    send_parser.add_argument("--session", "-s", help="Session ID (default: most recent)")
 
     # broadcast subcommand
-    broadcast_parser = subparsers.add_parser(
-        "broadcast", help="Send text to all agents"
-    )
+    broadcast_parser = subparsers.add_parser("broadcast", help="Send text to all agents")
     broadcast_parser.add_argument("text", nargs="+", help="Text to broadcast")
-    broadcast_parser.add_argument(
-        "--session", "-s", help="Session ID (default: most recent)"
-    )
+    broadcast_parser.add_argument("--session", "-s", help="Session ID (default: most recent)")
     broadcast_parser.add_argument(
         "--exclude-main",
         action="store_true",
@@ -414,9 +399,7 @@ def create_parser() -> argparse.ArgumentParser:
     focus_parser.add_argument(
         "target", help="Agent ID, pane index, or direction (left/right/up/down)"
     )
-    focus_parser.add_argument(
-        "--session", "-s", help="Session ID (default: most recent)"
-    )
+    focus_parser.add_argument("--session", "-s", help="Session ID (default: most recent)")
 
     # list subcommand
     list_parser = subparsers.add_parser("list", help="List active sessions")
@@ -427,17 +410,11 @@ def create_parser() -> argparse.ArgumentParser:
     # close subcommand
     close_parser = subparsers.add_parser("close", help="Close specific agent pane")
     close_parser.add_argument("target", help="Agent ID or pane index")
-    close_parser.add_argument(
-        "--session", "-s", help="Session ID (default: most recent)"
-    )
+    close_parser.add_argument("--session", "-s", help="Session ID (default: most recent)")
 
     # kill subcommand
-    kill_parser = subparsers.add_parser(
-        "kill", help="Terminate session and close window"
-    )
-    kill_parser.add_argument(
-        "session", nargs="?", help="Session ID (default: most recent)"
-    )
+    kill_parser = subparsers.add_parser("kill", help="Terminate session and close window")
+    kill_parser.add_argument("session", nargs="?", help="Session ID (default: most recent)")
     kill_parser.add_argument(
         "--force", "-f", action="store_true", help="Force kill without confirmation"
     )
@@ -450,7 +427,7 @@ def create_parser() -> argparse.ArgumentParser:
 # =============================================================================
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main entry point for agent action."""
     parser = create_parser()
     parsed_args = parser.parse_args(args)

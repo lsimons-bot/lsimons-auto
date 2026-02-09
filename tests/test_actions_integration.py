@@ -10,6 +10,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+
 import pytest
 
 
@@ -28,9 +29,7 @@ class TestActionsIntegration(unittest.TestCase):
         if not cls.project_root.exists():
             raise unittest.SkipTest(f"Project root not found: {cls.project_root}")
         if not cls.dispatcher_script.exists():
-            raise unittest.SkipTest(
-                f"Dispatcher script not found: {cls.dispatcher_script}"
-            )
+            raise unittest.SkipTest(f"Dispatcher script not found: {cls.dispatcher_script}")
         if not cls.echo_script.exists():
             raise unittest.SkipTest(f"Echo script not found: {cls.echo_script}")
 
@@ -55,9 +54,7 @@ class TestActionsIntegration(unittest.TestCase):
 
     def test_dispatcher_help_shows_actions(self):
         """Test that dispatcher help shows available actions including echo."""
-        result = self.run_command(
-            [sys.executable, str(self.dispatcher_script), "--help"]
-        )
+        result = self.run_command([sys.executable, str(self.dispatcher_script), "--help"])
 
         self.assertIn("lsimons-auto command dispatcher", result.stdout)
         self.assertIn("Available actions:", result.stdout)
@@ -74,9 +71,7 @@ class TestActionsIntegration(unittest.TestCase):
 
     def test_dispatcher_echo_action_help(self):
         """Test that dispatcher forwards help request to echo action."""
-        result = self.run_command(
-            [sys.executable, str(self.dispatcher_script), "echo", "--help"]
-        )
+        result = self.run_command([sys.executable, str(self.dispatcher_script), "echo", "--help"])
 
         self.assertIn("Echo a message", result.stdout)
         self.assertIn("--upper", result.stdout)
@@ -155,9 +150,7 @@ class TestActionsIntegration(unittest.TestCase):
 
     def test_standalone_echo_basic_functionality(self):
         """Test echo action works when run standalone."""
-        result = self.run_command(
-            [sys.executable, str(self.echo_script), "standalone", "test"]
-        )
+        result = self.run_command([sys.executable, str(self.echo_script), "standalone", "test"])
 
         self.assertEqual(result.stdout.strip(), "standalone test")
 
@@ -193,9 +186,7 @@ class TestActionsIntegration(unittest.TestCase):
     def test_echo_action_exit_codes(self):
         """Test that echo action returns proper exit codes."""
         # Successful execution should return 0
-        result = self.run_command(
-            [sys.executable, str(self.dispatcher_script), "echo", "test"]
-        )
+        result = self.run_command([sys.executable, str(self.dispatcher_script), "echo", "test"])
         self.assertEqual(result.returncode, 0)
 
         # Invalid arguments should return non-zero
@@ -310,14 +301,7 @@ class TestInstallation(unittest.TestCase):
 
     def test_echo_script_is_executable(self):
         """Test that echo script has executable permissions."""
-        echo_script = (
-            Path.home()
-            / "dev"
-            / "lsimons-auto"
-            / "lsimons_auto"
-            / "actions"
-            / "echo.py"
-        )
+        echo_script = Path.home() / "dev" / "lsimons-auto" / "lsimons_auto" / "actions" / "echo.py"
 
         if not echo_script.exists():
             self.skipTest(f"Echo script not found: {echo_script}")
