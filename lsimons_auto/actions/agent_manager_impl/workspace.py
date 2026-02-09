@@ -5,15 +5,13 @@ Provides functions to scan for git repositories and match user queries.
 """
 
 from pathlib import Path
-from typing import Optional
-
 
 # Constants
 GIT_ROOT = Path.home() / "git"
 
 
 def discover_workspaces(
-    git_root: Optional[Path] = None,
+    git_root: Path | None = None,
 ) -> dict[str, dict[str, Path]]:
     """
     Scan ~/git for org/repo structure.

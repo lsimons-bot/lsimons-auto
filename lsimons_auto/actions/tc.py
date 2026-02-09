@@ -16,15 +16,13 @@ import sys
 from collections.abc import Iterator
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Optional
 
 DEFAULT_BASE_DIR = (
-    "~/Schuberg Philis/Engineering - Documents/"
-    "\U0001f4c5 Meetings/Technology Council"
+    "~/Schuberg Philis/Engineering - Documents/\U0001f4c5 Meetings/Technology Council"
 )
 
 
-def get_base_dir(args_base_dir: Optional[str]) -> Path:
+def get_base_dir(args_base_dir: str | None) -> Path:
     """Get the base directory from args, env, or default."""
     if args_base_dir:
         return Path(args_base_dir).expanduser()
@@ -34,7 +32,7 @@ def get_base_dir(args_base_dir: Optional[str]) -> Path:
     return Path(DEFAULT_BASE_DIR).expanduser()
 
 
-def get_next_monday(reference_date: Optional[date] = None) -> date:
+def get_next_monday(reference_date: date | None = None) -> date:
     """Get the date of the next Monday (or today if today is Monday)."""
     today = reference_date or date.today()
     days_until_monday = (7 - today.weekday()) % 7
@@ -53,16 +51,14 @@ def format_date_yyyymmdd(date_obj: date) -> str:
     return date_obj.strftime("%Y%m%d")
 
 
-def find_docx_file(directory_path: Path, date_str: str) -> Optional[Path]:
+def find_docx_file(directory_path: Path, date_str: str) -> Path | None:
     """Check if a .docx file exists in the directory."""
     expected_filename = f"{date_str} Minutes Technology Council.docx"
     file_path = directory_path / expected_filename
     return file_path if file_path.exists() else None
 
 
-def copy_template_file(
-    source_template: Path, target_directory: Path, date_str: str
-) -> Optional[Path]:
+def copy_template_file(source_template: Path, target_directory: Path, date_str: str) -> Path | None:
     """Copy the template file to the target directory with the correct name."""
     target_filename = f"{date_str} Minutes Technology Council.docx"
     target_path = target_directory / target_filename
@@ -104,7 +100,7 @@ def open_document_in_word(file_path: Path) -> bool:
 
 def find_most_recent_meeting_document(
     base_dir: Path, current_monday: date
-) -> tuple[Optional[Path], Optional[date]]:
+) -> tuple[Path | None, date | None]:
     """Find the most recent existing meeting document within the current year."""
     current_year = current_monday.year
     check_monday = get_previous_monday(current_monday)
@@ -342,11 +338,12 @@ def create_dirs(base_dir: Path, dry_run: bool = False) -> int:
                 print(f"Created directory: {name}")
             count += 1
 
-    print(f"{'Would create' if dry_run else 'Created'} {count} directories for Mondays of {next_year}.")
+    verb = "Would create" if dry_run else "Created"
+    print(f"{verb} {count} directories for Mondays of {next_year}.")
     return 0
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main function that dispatches to subcommands."""
     parser = argparse.ArgumentParser(
         description="Technology Council meeting management",
@@ -360,16 +357,12 @@ def main(args: Optional[list[str]] = None) -> None:
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
-    prep_parser = subparsers.add_parser(
-        "prep-meeting", help="Prepare for next Monday's meeting"
-    )
+    prep_parser = subparsers.add_parser("prep-meeting", help="Prepare for next Monday's meeting")
     prep_parser.add_argument(
         "--dry-run", action="store_true", help="Show what would be done without making changes"
     )
 
-    gen_parser = subparsers.add_parser(
-        "gen-pdf", help="Generate PDFs for current year's meetings"
-    )
+    gen_parser = subparsers.add_parser("gen-pdf", help="Generate PDFs for current year's meetings")
     gen_parser.add_argument(
         "--dry-run", action="store_true", help="Show what would be done without making changes"
     )

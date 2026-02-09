@@ -12,8 +12,6 @@ import argparse
 import socket
 import subprocess
 import sys
-from typing import Optional
-
 
 # Reduced command set for "paddo" host
 PADDO_COMMANDS = [
@@ -90,15 +88,13 @@ def launch_all_apps() -> None:
         if launch_command(command):
             success_count += 1
 
-    print(
-        f"\nLaunch completed: {success_count}/{total_count} commands started successfully"
-    )
+    print(f"\nLaunch completed: {success_count}/{total_count} commands started successfully")
 
     if success_count < total_count:
         print("Some commands failed to launch. Check the output above for details.")
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main function to launch predefined apps."""
     parser = argparse.ArgumentParser(
         description="Launch predefined applications and commands in the background"

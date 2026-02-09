@@ -9,9 +9,8 @@ using a monospace font optimized for high-resolution macOS displays.
 import argparse
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 
 def find_available_font() -> str:
@@ -56,7 +55,7 @@ def generate_background(width: int = 2880, height: int = 1800) -> Path:
         time_font = ImageFont.load_default()
 
     # Generate timestamp
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     timestamp = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Calculate text positioning
@@ -146,7 +145,7 @@ def cleanup_old_backgrounds(keep_count: int = 5) -> None:
             print(f"Warning: Could not remove {old_file.name}: {e}")
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main function to generate and set desktop background."""
     parser = argparse.ArgumentParser(
         description="Generate and set desktop background with current UTC time"

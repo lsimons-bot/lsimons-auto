@@ -7,8 +7,6 @@ Defines AgentPane and AgentSession for tracking multi-agent Ghostty layouts.
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Optional
-
 
 # Constants
 SESSIONS_DIR = Path.home() / ".config" / "auto" / "agent" / "sessions"
@@ -22,8 +20,8 @@ class AgentPane:
     pane_index: int  # 0 for main, 1+ for subagents
     command: str  # e.g., "claude" or "pi"
     is_main: bool
-    worktree_path: Optional[str] = None  # Path to git worktree for this pane
-    tmux_pane_id: Optional[str] = None  # tmux pane ID (e.g., "%0", "%1")
+    worktree_path: str | None = None  # Path to git worktree for this pane
+    tmux_pane_id: str | None = None  # tmux pane ID (e.g., "%0", "%1")
 
 
 @dataclass
@@ -36,8 +34,8 @@ class AgentSession:
     org_name: str  # e.g., "lsimons"
     created_at: str  # ISO timestamp
     panes: list[AgentPane] = field(default_factory=lambda: [])
-    window_id: Optional[int] = None  # Deprecated: Ghostty window ID
-    tmux_session_name: Optional[str] = None  # tmux session name
+    window_id: int | None = None  # Deprecated: Ghostty window ID
+    tmux_session_name: str | None = None  # tmux session name
 
     @classmethod
     def load(cls, session_id: str) -> "AgentSession":
@@ -80,15 +78,13 @@ def list_sessions() -> list[AgentSession]:
     return sessions
 
 
-def get_most_recent_session() -> Optional[AgentSession]:
+def get_most_recent_session() -> AgentSession | None:
     """Get the most recently created session."""
     sessions = list_sessions()
     return sessions[0] if sessions else None
 
 
-def find_pane_by_target(
-    session: AgentSession, target: str
-) -> Optional[tuple[AgentPane, int]]:
+def find_pane_by_target(session: AgentSession, target: str) -> tuple[AgentPane, int] | None:
     """Find pane by ID, index, or 'main'."""
     target_lower = target.lower()
 

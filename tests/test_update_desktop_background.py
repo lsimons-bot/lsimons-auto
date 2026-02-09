@@ -6,11 +6,12 @@ These tests focus on the desktop background generation functionality including
 image generation, font selection, AppleScript execution, and cleanup logic.
 """
 
+import contextlib
 import subprocess
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 from lsimons_auto.actions import update_desktop_background
 
@@ -26,19 +27,14 @@ class TestUpdateDesktopBackground(unittest.TestCase):
         """Set up test environment."""
         cls.project_root = Path.home() / "dev" / "lsimons-auto"
         cls.background_script = (
-            cls.project_root
-            / "lsimons_auto"
-            / "actions"
-            / "update_desktop_background.py"
+            cls.project_root / "lsimons_auto" / "actions" / "update_desktop_background.py"
         )
 
         # Verify test environment
         if not cls.project_root.exists():
             raise unittest.SkipTest(f"Project root not found: {cls.project_root}")
         if not cls.background_script.exists():
-            raise unittest.SkipTest(
-                f"Background script not found: {cls.background_script}"
-            )
+            raise unittest.SkipTest(f"Background script not found: {cls.background_script}")
 
     def test_cli_help(self) -> None:
         """Test command line interface help output."""
@@ -102,9 +98,7 @@ class TestUpdateDesktopBackground(unittest.TestCase):
     @patch("lsimons_auto.actions.update_desktop_background.subprocess.run")
     def test_set_desktop_background_failure(self, mock_run: MagicMock) -> None:
         """Test handling of desktop background setting failure."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, ["osascript"], stderr="Error"
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(1, ["osascript"], stderr="Error")
         test_path = Path("/tmp/test_background.png")
 
         with self.assertRaises(SystemExit):
@@ -132,23 +126,24 @@ class TestUpdateDesktopBackground(unittest.TestCase):
                 test_file.touch()
 
             # Mock the backgrounds directory
-            with patch(
-                "pathlib.Path.home",
-                return_value=Path(tmpdir).parent,
-            ):
-                with patch.object(
+            with (
+                patch(
+                    "pathlib.Path.home",
+                    return_value=Path(tmpdir).parent,
+                ),
+                patch.object(
                     Path,
                     "__truediv__",
                     side_effect=lambda self, other: (  # pyright: ignore[reportUnknownLambdaType]
-                        bg_dir if str(other) == "backgrounds" else Path(self) / other  # pyright: ignore[reportUnknownArgumentType]
+                        bg_dir
+                        if str(other) == "backgrounds"  # pyright: ignore[reportUnknownArgumentType]
+                        else Path(self) / other  # pyright: ignore[reportUnknownArgumentType]
                     ),
-                ):
-                    # This test is simplified - just verify no crash
-                    try:
-                        update_desktop_background.cleanup_old_backgrounds(5)
-                    except Exception:
-                        # Mocking is complex here, just verify function structure
-                        pass
+                ),
+                contextlib.suppress(Exception),
+            ):
+                # This test is simplified - just verify no crash
+                update_desktop_background.cleanup_old_backgrounds(5)
 
     def test_cleanup_old_backgrounds_no_directory(self) -> None:
         """Test cleanup when backgrounds directory doesn't exist."""
@@ -167,7 +162,9 @@ class TestUpdateDesktopBackground(unittest.TestCase):
     @patch("lsimons_auto.actions.update_desktop_background.generate_background")
     @patch("lsimons_auto.actions.update_desktop_background.set_desktop_background")
     @patch("lsimons_auto.actions.update_desktop_background.cleanup_old_backgrounds")
-    def test_main_normal_execution(self, mock_cleanup: MagicMock, mock_set_bg: MagicMock, mock_generate: MagicMock) -> None:
+    def test_main_normal_execution(
+        self, mock_cleanup: MagicMock, mock_set_bg: MagicMock, mock_generate: MagicMock
+    ) -> None:
         """Test main function normal execution."""
         mock_generate.return_value = Path("/tmp/test.png")
 
@@ -180,7 +177,9 @@ class TestUpdateDesktopBackground(unittest.TestCase):
     @patch("lsimons_auto.actions.update_desktop_background.generate_background")
     @patch("lsimons_auto.actions.update_desktop_background.set_desktop_background")
     @patch("lsimons_auto.actions.update_desktop_background.cleanup_old_backgrounds")
-    def test_main_dry_run(self, mock_cleanup: MagicMock, mock_set_bg: MagicMock, mock_generate: MagicMock) -> None:
+    def test_main_dry_run(
+        self, mock_cleanup: MagicMock, mock_set_bg: MagicMock, mock_generate: MagicMock
+    ) -> None:
         """Test main function with --dry-run flag."""
         mock_generate.return_value = Path("/tmp/test.png")
 
@@ -212,18 +211,18 @@ class TestUpdateDesktopBackground(unittest.TestCase):
 
     def test_generate_background_pillow_not_installed(self) -> None:
         """Test handling when Pillow is not installed."""
-        with patch.dict("sys.modules", {"PIL": None}):
-            with patch(
-                "builtins.__import__", side_effect=ImportError("No module named 'PIL'")
-            ):
-                with self.assertRaises(SystemExit) as cm:
-                    # This will fail on import, which is expected
-                    try:
-                        update_desktop_background.generate_background()
-                    except ImportError:
-                        sys.exit(1)
+        with (
+            patch.dict("sys.modules", {"PIL": None}),
+            patch("builtins.__import__", side_effect=ImportError("No module named 'PIL'")),
+        ):
+            with self.assertRaises(SystemExit) as cm:
+                # This will fail on import, which is expected
+                try:
+                    update_desktop_background.generate_background()
+                except ImportError:
+                    sys.exit(1)
 
-                self.assertEqual(cm.exception.code, 1)
+            self.assertEqual(cm.exception.code, 1)
 
 
 if __name__ == "__main__":

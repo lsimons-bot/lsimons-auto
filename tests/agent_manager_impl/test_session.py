@@ -73,9 +73,11 @@ class TestSessionManagement(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             sessions_dir = Path(tmpdir) / "sessions"
             sessions_dir.mkdir(parents=True)
-            with patch.object(session, "SESSIONS_DIR", sessions_dir):
-                with self.assertRaises(FileNotFoundError):
-                    session.AgentSession.load("nonexistent")
+            with (
+                patch.object(session, "SESSIONS_DIR", sessions_dir),
+                self.assertRaises(FileNotFoundError),
+            ):
+                session.AgentSession.load("nonexistent")
 
 
 class TestListSessions(unittest.TestCase):

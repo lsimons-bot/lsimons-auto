@@ -8,10 +8,8 @@ testing the command dispatcher without side effects.
 
 import argparse
 
-from typing import Optional
 
-
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Echo the provided message with optional formatting."""
     parser = argparse.ArgumentParser(description="Echo a message")
 

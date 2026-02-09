@@ -4,8 +4,9 @@ worktree.py - Git worktree management for isolated agent workspaces.
 Provides functions to create and manage git worktrees for parallel Claude sessions.
 """
 
+import contextlib
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -59,7 +60,7 @@ def ensure_worktree(
         shutil.rmtree(worktree_path)
 
     # Generate unique branch name with timestamp
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     branch_name = f"{worktree_name}-{timestamp}"
 
     # Create the worktree with a new branch
@@ -72,9 +73,7 @@ def ensure_worktree(
             text=True,
         )
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            f"Failed to create worktree '{worktree_name}': {e.stderr}"
-        ) from e
+        raise RuntimeError(f"Failed to create worktree '{worktree_name}': {e.stderr}") from e
 
     return worktree_path
 
@@ -110,7 +109,7 @@ def remove_worktree(workspace_path: Path, worktree_path: Path) -> None:
         workspace_path: Path to the original git repository
         worktree_path: Path to the worktree to remove
     """
-    try:
+    with contextlib.suppress(subprocess.CalledProcessError):
         subprocess.run(
             ["git", "worktree", "remove", "--force", str(worktree_path)],
             cwd=workspace_path,
@@ -118,9 +117,6 @@ def remove_worktree(workspace_path: Path, worktree_path: Path) -> None:
             capture_output=True,
             text=True,
         )
-    except subprocess.CalledProcessError:
-        # Worktree may already be removed, ignore
-        pass
 
 
 def list_worktrees(workspace_path: Path) -> list[tuple[Path, str]]:

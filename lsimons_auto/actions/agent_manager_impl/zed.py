@@ -34,7 +34,7 @@ def launch_zed_with_terminal(workspace_path: Path) -> None:
 
 def position_windows_fill_screen() -> None:
     """Position Ghostty and Zed to fill screen (overlapping)."""
-    script = '''
+    script = """
     tell application "Finder"
         set screenBounds to bounds of window of desktop
         set screenWidth to item 3 of screenBounds
@@ -60,5 +60,5 @@ def position_windows_fill_screen() -> None:
             end try
         end tell
     end tell
-    '''
+    """
     run_applescript(script)

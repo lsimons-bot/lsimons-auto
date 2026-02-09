@@ -13,23 +13,21 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 
 class OwnerConfig(NamedTuple):
     name: str
-    local_dir: Optional[str] = None
+    local_dir: str | None = None
     allow_archived: bool = True
-    hostname_filter: Optional[str] = None
+    hostname_filter: str | None = None
 
 
 OWNER_CONFIGS = [
     OwnerConfig(name="lsimons"),
     OwnerConfig(name="lsimons-bot"),
     OwnerConfig(name="typelinkmodel"),
-    OwnerConfig(
-        name="LAB271", local_dir="labs", allow_archived=False, hostname_filter="sbp"
-    ),
+    OwnerConfig(name="LAB271", local_dir="labs", allow_archived=False, hostname_filter="sbp"),
 ]
 
 
@@ -46,15 +44,14 @@ class BotRemoteContext(NamedTuple):
     bot_fork_map: dict[str, str]  # Maps "owner/repo" -> fork_url
 
 
-def get_command_output(cmd: list[str], cwd: Optional[Path] = None) -> Optional[str]:
+def get_command_output(cmd: list[str], cwd: Path | None = None) -> str | None:
     """Run a command and return its stdout, or None on failure."""
     try:
         result = subprocess.run(
             cmd,
             cwd=cwd,
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         return result.stdout.strip()
@@ -73,9 +70,7 @@ def try_fast_forward(repo_path: Path, dry_run: bool = False) -> bool:
     Returns True if fast-forward was performed (or would be in dry-run), False otherwise.
     """
     # Check current branch
-    current_branch = get_command_output(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo_path
-    )
+    current_branch = get_command_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo_path)
     if current_branch != "main":
         return False
 
@@ -86,9 +81,7 @@ def try_fast_forward(repo_path: Path, dry_run: bool = False) -> bool:
 
     # Get local and remote commit hashes
     local_hash = get_command_output(["git", "rev-parse", "HEAD"], cwd=repo_path)
-    remote_hash = get_command_output(
-        ["git", "rev-parse", "@{upstream}"], cwd=repo_path
-    )
+    remote_hash = get_command_output(["git", "rev-parse", "@{upstream}"], cwd=repo_path)
 
     if local_hash is None or remote_hash is None:
         return False
@@ -98,9 +91,7 @@ def try_fast_forward(repo_path: Path, dry_run: bool = False) -> bool:
         return False
 
     # Check if fast-forward is possible (local is ancestor of remote)
-    merge_base = get_command_output(
-        ["git", "merge-base", local_hash, remote_hash], cwd=repo_path
-    )
+    merge_base = get_command_output(["git", "merge-base", local_hash, remote_hash], cwd=repo_path)
     if merge_base != local_hash:
         # Local has diverged, can't fast-forward
         return False
@@ -113,7 +104,7 @@ def try_fast_forward(repo_path: Path, dry_run: bool = False) -> bool:
     return run_command(["git", "merge", "--ff-only", "@{upstream}"], cwd=repo_path)
 
 
-def run_command(cmd: list[str], cwd: Optional[Path] = None) -> bool:
+def run_command(cmd: list[str], cwd: Path | None = None) -> bool:
     """
     Run a shell command.
     Returns True if successful, False otherwise.
@@ -152,9 +143,7 @@ def get_repos(owner: str, archive: bool = False) -> list[str]:
         "name,isFork,isArchived",
     ]
     try:
-        result = subprocess.run(
-            cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         repos_data = json.loads(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error fetching repo list: {e.stderr}")
@@ -175,22 +164,19 @@ def get_repos(owner: str, archive: bool = False) -> list[str]:
             continue
 
         is_repo_archived = repo.get("isArchived", False)
-        if archive and is_repo_archived:
-            filtered_repos.append(str(repo["name"]))
-        elif not archive and not is_repo_archived:
+        if archive and is_repo_archived or not archive and not is_repo_archived:
             filtered_repos.append(str(repo["name"]))
 
     return filtered_repos
 
 
-def get_authenticated_user() -> Optional[str]:
+def get_authenticated_user() -> str | None:
     """Get the authenticated GitHub user via gh CLI."""
     try:
         result = subprocess.run(
             ["gh", "api", "user", "--jq", ".login"],
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         return result.stdout.strip()
@@ -216,8 +202,7 @@ def get_user_forks(username: str) -> dict[str, str]:
                 "200",
             ],
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         forks_data: list[dict[str, Any]] = json.loads(result.stdout)  # pyright: ignore[reportAny]
@@ -243,7 +228,7 @@ def get_user_forks(username: str) -> dict[str, str]:
         return {}
 
 
-def build_fork_context() -> Optional[ForkContext]:
+def build_fork_context() -> ForkContext | None:
     """Build fork context if authenticated user is lsimons-bot."""
     username = get_authenticated_user()
     if not username:
@@ -258,7 +243,7 @@ def build_fork_context() -> Optional[ForkContext]:
     return ForkContext(username=username, fork_map=fork_map)
 
 
-def build_bot_remote_context() -> Optional[BotRemoteContext]:
+def build_bot_remote_context() -> BotRemoteContext | None:
     """Build bot remote context if authenticated user is NOT lsimons-bot."""
     username = get_authenticated_user()
     if not username:
@@ -273,9 +258,7 @@ def build_bot_remote_context() -> Optional[BotRemoteContext]:
     return BotRemoteContext(bot_fork_map=bot_fork_map)
 
 
-def configure_bot_remote(
-    repo_path: Path, bot_fork_url: str, dry_run: bool
-) -> bool:
+def configure_bot_remote(repo_path: Path, bot_fork_url: str, dry_run: bool) -> bool:
     """Configure a 'bot' remote pointing to the lsimons-bot fork."""
     if dry_run:
         print(f"  Would add/update 'bot' remote for {repo_path.name} -> {bot_fork_url}")
@@ -287,8 +270,7 @@ def configure_bot_remote(
             ["git", "remote"],
             cwd=repo_path,
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         existing_remotes = result.stdout.strip().split("\n")
@@ -299,8 +281,7 @@ def configure_bot_remote(
                 ["git", "remote", "get-url", "bot"],
                 cwd=repo_path,
                 check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=True,
             )
             current_url = result.stdout.strip()
@@ -313,9 +294,7 @@ def configure_bot_remote(
                     return False
         else:
             print(f"  Adding 'bot' remote for {repo_path.name}...")
-            if not run_command(
-                ["git", "remote", "add", "bot", bot_fork_url], cwd=repo_path
-            ):
+            if not run_command(["git", "remote", "add", "bot", bot_fork_url], cwd=repo_path):
                 return False
 
         # Fetch from bot remote
@@ -327,9 +306,7 @@ def configure_bot_remote(
         return False
 
 
-def sync_bot_fork(
-    repo_path: Path, owner: str, repo_name: str, dry_run: bool
-) -> None:
+def sync_bot_fork(repo_path: Path, owner: str, repo_name: str, dry_run: bool) -> None:
     """
     Attempt to sync the lsimons-bot fork if it's behind origin/main.
     Uses 'gh repo sync' to fast-forward the fork.
@@ -350,9 +327,7 @@ def sync_bot_fork(
         return
 
     # Check if bot/main is ancestor of origin/main (can fast-forward)
-    merge_base = get_command_output(
-        ["git", "merge-base", bot_main, origin_main], cwd=repo_path
-    )
+    merge_base = get_command_output(["git", "merge-base", bot_main, origin_main], cwd=repo_path)
 
     if merge_base == bot_main:
         # bot/main is behind origin/main and can be fast-forwarded
@@ -374,9 +349,7 @@ def sync_bot_fork(
             run_command(["git", "fetch", "bot"], cwd=repo_path)
     elif merge_base == origin_main:
         # origin/main is behind bot/main - bot has extra commits
-        print(
-            f"  Warning: lsimons-bot/{repo_name} has commits ahead of {owner}/{repo_name}"
-        )
+        print(f"  Warning: lsimons-bot/{repo_name} has commits ahead of {owner}/{repo_name}")
     else:
         # Diverged - cannot fast-forward
         print(
@@ -393,7 +366,7 @@ def configure_fork_remotes(
         print(f"Would reconfigure remotes for {repo_path.name}:")
         print(f"  origin -> {fork_url}")
         print(f"  upstream -> {upstream_url}")
-        print(f"Would configure gh CLI for push to origin, PR to upstream")
+        print("Would configure gh CLI for push to origin, PR to upstream")
         return True
 
     try:
@@ -402,8 +375,7 @@ def configure_fork_remotes(
             ["git", "remote"],
             cwd=repo_path,
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         existing_remotes = result.stdout.strip().split("\n")
@@ -415,25 +387,20 @@ def configure_fork_remotes(
                 ["git", "remote", "get-url", "origin"],
                 cwd=repo_path,
                 check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=True,
             )
             current_origin = result.stdout.strip()
 
             if current_origin != fork_url:
                 print(f"Reconfiguring origin for {repo_path.name}...")
-                if not run_command(
-                    ["git", "remote", "set-url", "origin", fork_url], cwd=repo_path
-                ):
+                if not run_command(["git", "remote", "set-url", "origin", fork_url], cwd=repo_path):
                     return False
             else:
                 print(f"Origin already configured correctly for {repo_path.name}")
         else:
             print(f"Adding origin remote for {repo_path.name}...")
-            if not run_command(
-                ["git", "remote", "add", "origin", fork_url], cwd=repo_path
-            ):
+            if not run_command(["git", "remote", "add", "origin", fork_url], cwd=repo_path):
                 return False
 
         # Configure upstream remote
@@ -443,8 +410,7 @@ def configure_fork_remotes(
                 ["git", "remote", "get-url", "upstream"],
                 cwd=repo_path,
                 check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=True,
             )
             current_upstream = result.stdout.strip()
@@ -460,9 +426,7 @@ def configure_fork_remotes(
                 print(f"Upstream already configured correctly for {repo_path.name}")
         else:
             print(f"Adding upstream remote for {repo_path.name}...")
-            if not run_command(
-                ["git", "remote", "add", "upstream", upstream_url], cwd=repo_path
-            ):
+            if not run_command(["git", "remote", "add", "upstream", upstream_url], cwd=repo_path):
                 return False
 
         # Fetch from both remotes
@@ -488,8 +452,8 @@ def sync_repo(
     owner: str,
     repo_name: str,
     target_dir: Path,
-    fork_context: Optional[ForkContext] = None,
-    bot_context: Optional[BotRemoteContext] = None,
+    fork_context: ForkContext | None = None,
+    bot_context: BotRemoteContext | None = None,
     dry_run: bool = False,
 ) -> bool:
     """
@@ -540,9 +504,7 @@ def sync_repo(
     return success
 
 
-def fetch_directory_repos(
-    directory: Path, visited_repos: set[Path], dry_run: bool = False
-) -> None:
+def fetch_directory_repos(directory: Path, visited_repos: set[Path], dry_run: bool = False) -> None:
     """Run git fetch on all git repositories in a directory that haven't been visited."""
     if not directory.exists():
         return
@@ -568,7 +530,7 @@ def fetch_directory_repos(
                     try_fast_forward(item, dry_run)
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     """Main function that performs the action work."""
     available_owners = ", ".join(cfg.name for cfg in OWNER_CONFIGS)
     parser = argparse.ArgumentParser(
@@ -597,9 +559,7 @@ def main(args: Optional[list[str]] = None) -> None:
 
     # Filter owners if specific one requested
     if parsed_args.owner:
-        configs_to_process = [
-            cfg for cfg in OWNER_CONFIGS if cfg.name == parsed_args.owner
-        ]
+        configs_to_process = [cfg for cfg in OWNER_CONFIGS if cfg.name == parsed_args.owner]
     else:
         configs_to_process = OWNER_CONFIGS
 
@@ -613,11 +573,10 @@ def main(args: Optional[list[str]] = None) -> None:
 
     for config in configs_to_process:
         # Check hostname filter
-        if config.hostname_filter and not current_hostname.startswith(
-            config.hostname_filter
-        ):
+        if config.hostname_filter and not current_hostname.startswith(config.hostname_filter):
             print(
-                f"Skipping {config.name}: Hostname '{current_hostname}' does not start with '{config.hostname_filter}'."
+                f"Skipping {config.name}: Hostname '{current_hostname}'"
+                f" does not start with '{config.hostname_filter}'."
             )
             continue
 
@@ -680,9 +639,7 @@ def main(args: Optional[list[str]] = None) -> None:
                     visited_repos.add(repo_path)
 
                     if parsed_args.dry_run:
-                        print(
-                            f"Would sync archived repo: {owner}/{repo} to {archive_dir}"
-                        )
+                        print(f"Would sync archived repo: {owner}/{repo} to {archive_dir}")
                         # Still need to check fork/bot configuration in dry-run
                         repo_path = archive_dir / repo
                         if repo_path.exists():
@@ -700,9 +657,7 @@ def main(args: Optional[list[str]] = None) -> None:
                             owner, repo, archive_dir, fork_context, bot_context, parsed_args.dry_run
                         )
             else:
-                print(
-                    f"Skipping archived repositories for {owner} (configured to ignore)"
-                )
+                print(f"Skipping archived repositories for {owner} (configured to ignore)")
 
         # Sync any other existing repos in the directories
         fetch_directory_repos(owner_dir, visited_repos, parsed_args.dry_run)

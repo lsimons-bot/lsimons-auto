@@ -6,8 +6,6 @@ Provides low-level functions for interacting with macOS and Ghostty.
 
 import subprocess
 import time
-from typing import Optional
-
 
 # Constants
 APPLESCRIPT_DELAY = 0.3  # seconds between AppleScript actions
@@ -36,7 +34,7 @@ def activate_app(app: str) -> None:
     time.sleep(APPLESCRIPT_DELAY)
 
 
-def keystroke(app: str, key: str, modifiers: Optional[list[str]] = None) -> None:
+def keystroke(app: str, key: str, modifiers: list[str] | None = None) -> None:
     """Send keystroke to application."""
     mod_str = ""
     if modifiers:
@@ -55,7 +53,7 @@ def keystroke(app: str, key: str, modifiers: Optional[list[str]] = None) -> None
     time.sleep(APPLESCRIPT_DELAY)
 
 
-def key_code(app: str, code: int, modifiers: Optional[list[str]] = None) -> None:
+def key_code(app: str, code: int, modifiers: list[str] | None = None) -> None:
     """Send key code to application."""
     mod_str = ""
     if modifiers:
@@ -139,9 +137,9 @@ def ghostty_run_command(cmd: str) -> None:
     time.sleep(APPLESCRIPT_DELAY)
 
 
-def ghostty_get_front_window_id() -> Optional[int]:
+def ghostty_get_front_window_id() -> int | None:
     """Get the ID of the front Ghostty window."""
-    script = '''
+    script = """
     tell application "System Events"
         tell process "Ghostty"
             try
@@ -151,7 +149,7 @@ def ghostty_get_front_window_id() -> Optional[int]:
             end try
         end tell
     end tell
-    '''
+    """
     try:
         result = run_applescript(script)
         if result:
@@ -164,7 +162,7 @@ def ghostty_get_front_window_id() -> Optional[int]:
 def ghostty_close_window_by_id(window_id: int) -> bool:
     """Close a specific Ghostty window by its ID. Returns True if successful."""
     # First, bring the target window to front, then close it
-    script = f'''
+    script = f"""
     tell application "System Events"
         tell process "Ghostty"
             try
@@ -178,7 +176,7 @@ def ghostty_close_window_by_id(window_id: int) -> bool:
             end try
         end tell
     end tell
-    '''
+    """
     try:
         result = run_applescript(script)
         if result != "found":
