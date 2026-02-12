@@ -211,9 +211,7 @@ class TestRunCommand:
     @patch("subprocess.run")
     def test_run_command_failure(self, mock_run: MagicMock) -> None:
         """Test failed command execution."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, ["false"], output="error output"
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(1, ["false"], output="error output")
 
         result = run_command(["false"])
         assert result is False
@@ -484,9 +482,7 @@ class TestConfigureBotRemote:
         """Test updating existing bot remote with different URL."""
         # Call sequence: get remotes, get current URL
         mock_run.side_effect = [
-            subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="origin\nbot\n", stderr=""
-            ),
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="origin\nbot\n", stderr=""),
             subprocess.CompletedProcess(
                 args=[], returncode=0, stdout="https://github.com/old/repo\n", stderr=""
             ),
@@ -508,9 +504,7 @@ class TestConfigureBotRemote:
         """Test when bot remote already points to correct URL."""
         # Call sequence: get remotes, get current URL
         mock_run.side_effect = [
-            subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="origin\nbot\n", stderr=""
-            ),
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="origin\nbot\n", stderr=""),
             subprocess.CompletedProcess(
                 args=[], returncode=0, stdout="https://github.com/bot/repo\n", stderr=""
             ),

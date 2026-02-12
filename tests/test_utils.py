@@ -72,9 +72,7 @@ class TestRunCommand:
     @patch("subprocess.run")
     def test_run_command_without_capture(self, mock_run: MagicMock) -> None:
         """Test command without output capture."""
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=["echo", "test"], returncode=0
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=["echo", "test"], returncode=0)
 
         result = run_command(["echo", "test"], capture_output=False)
         assert result.returncode == 0

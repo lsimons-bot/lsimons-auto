@@ -94,9 +94,7 @@ class TestMainDispatcher:
     @patch("subprocess.run")
     def test_execute_action(self, mock_run: MagicMock) -> None:
         """Test that action is executed via subprocess."""
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -111,9 +109,7 @@ class TestMainDispatcher:
     @patch("subprocess.run")
     def test_execute_action_with_flags(self, mock_run: MagicMock) -> None:
         """Test that action is executed with flags."""
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -127,9 +123,7 @@ class TestMainDispatcher:
     @patch("subprocess.run")
     def test_underscore_action_name(self, mock_run: MagicMock) -> None:
         """Test that underscore in action name is normalized."""
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -142,9 +136,7 @@ class TestMainDispatcher:
     @patch("subprocess.run")
     def test_action_non_zero_exit(self, mock_run: MagicMock) -> None:
         """Test that non-zero exit code is propagated."""
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=42
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=42)
 
         with pytest.raises(SystemExit) as exc_info:
             main()

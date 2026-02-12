@@ -125,9 +125,7 @@ def install_launch_agent() -> None:
             stderr=subprocess.DEVNULL,
             check=False,
         )
-        result = subprocess.run(
-            ["launchctl", "load", str(plist_dest_path)], check=False
-        )
+        result = subprocess.run(["launchctl", "load", str(plist_dest_path)], check=False)
         if result.returncode == 0:
             print(f"LaunchAgent {plist_file} loaded successfully!")
         else:
