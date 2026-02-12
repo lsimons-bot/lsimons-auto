@@ -17,6 +17,15 @@ from typing import Any, NamedTuple
 
 
 class OwnerConfig(NamedTuple):
+    """Configuration for a GitHub repository owner to sync.
+
+    Attributes:
+        name: GitHub username or organization name
+        local_dir: Optional subdirectory name for local repos (defaults to name)
+        allow_archived: Whether to sync archived repositories (default: True)
+        hostname_filter: Optional hostname requirement for syncing (default: None)
+    """
+
     name: str
     local_dir: str | None = None
     allow_archived: bool = True

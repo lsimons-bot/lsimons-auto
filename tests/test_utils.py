@@ -1,7 +1,7 @@
 """Tests for lsimons_auto.utils module."""
 
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -28,7 +28,7 @@ class TestRunCommand:
     """Test subprocess command utility."""
 
     @patch("subprocess.run")
-    def test_run_command_success(self, mock_run: object) -> None:
+    def test_run_command_success(self, mock_run: MagicMock) -> None:
         """Test successful command execution."""
         mock_run.return_value = subprocess.CompletedProcess(
             args=["echo", "hello"], returncode=0, stdout="hello\n", stderr=""
@@ -39,7 +39,7 @@ class TestRunCommand:
         assert result.stdout == "hello\n"
 
     @patch("subprocess.run")
-    def test_run_command_failure_with_check(self, mock_run: object) -> None:
+    def test_run_command_failure_with_check(self, mock_run: MagicMock) -> None:
         """Test that command failure with check=True exits."""
         mock_run.return_value = subprocess.CompletedProcess(
             args=["false"], returncode=1, stdout="", stderr="error"
@@ -50,7 +50,7 @@ class TestRunCommand:
         assert exc_info.value.code == 1
 
     @patch("subprocess.run")
-    def test_run_command_failure_without_check(self, mock_run: object) -> None:
+    def test_run_command_failure_without_check(self, mock_run: MagicMock) -> None:
         """Test that command failure with check=False returns result."""
         mock_run.return_value = subprocess.CompletedProcess(
             args=["false"], returncode=1, stdout="", stderr="error"
@@ -60,7 +60,7 @@ class TestRunCommand:
         assert result.returncode == 1
 
     @patch("subprocess.run")
-    def test_run_command_custom_error_message(self, mock_run: object) -> None:
+    def test_run_command_custom_error_message(self, mock_run: MagicMock) -> None:
         """Test custom error message is used."""
         mock_run.return_value = subprocess.CompletedProcess(
             args=["cmd"], returncode=1, stdout="", stderr="stderr"
@@ -70,7 +70,7 @@ class TestRunCommand:
             run_command(["cmd"], error_message="Custom error")
 
     @patch("subprocess.run")
-    def test_run_command_without_capture(self, mock_run: object) -> None:
+    def test_run_command_without_capture(self, mock_run: MagicMock) -> None:
         """Test command without output capture."""
         mock_run.return_value = subprocess.CompletedProcess(
             args=["echo", "test"], returncode=0
