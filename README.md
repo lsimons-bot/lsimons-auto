@@ -142,7 +142,7 @@ This project follows a spec-based development approach documented in [`docs/spec
 3. Action scripts are automatically discovered by the `auto` command dispatcher
 4. Add comprehensive tests and update documentation
 
-## Testing
+## Formatting, Linting, Tests
 
 Unit and integration tests are located in `tests/`. Tests are separated by markers:
 
@@ -150,20 +150,24 @@ Unit and integration tests are located in `tests/`. Tests are separated by marke
 - **Integration tests**: End-to-end tests with real side effects (file I/O, subprocess calls)
 
 ```bash
+# Format
+uv run ruff format .
+
+# Lint
+uv run ruff check .
+uv run basedpyright
+
 # Run unit tests only (default, fast)
 uv run pytest
+
+# Run unit tests with coverage
+uv run pytest --cov=lsimons_auto
 
 # Run all tests including integration tests
 uv run pytest -m ""
 
 # Run only integration tests
 uv run pytest -m integration
-
-# Specific test file
-uv run pytest tests/test_start_the_day.py
-
-# With verbose output
-uv run pytest -v
 ```
 
 ## System Management
