@@ -8,7 +8,7 @@ Personal automation toolkit for macOS with modular CLI (`auto`) and daily routin
 
 - **Install**: `python3 install.py`
 - **Test**: `uv run pytest` (unit tests) or `uv run pytest -m integration` (integration tests)
-- **Lint**: `uv run basedpyright`
+- **Lint**: `uv run ruff check .` and `uv run ruff format --check .` and `uv run basedpyright`
 - **Run**: `auto <action_name>` or `start-the-day`
 
 ## Structure
@@ -49,6 +49,8 @@ Work is NOT complete until `git push` succeeds.
 1. **Quality gates** (if code changed):
    ```bash
    uv run pytest
+   uv run ruff check .
+   uv run ruff format --check .
    uv run basedpyright
    ```
 

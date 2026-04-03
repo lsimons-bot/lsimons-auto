@@ -25,7 +25,7 @@ class OwnerConfig(NamedTuple):
         local_dir: Optional subdirectory name for local repos (defaults to name)
         allow_archived: Whether to sync archived repositories (default: True)
         hostname_filter: Optional hostname requirement for syncing (default: None)
-        repo_allowlist: Optional glob patterns; if set, only matching repos are synced (default: None)
+        repo_allowlist: Optional glob patterns; only matching repos are synced (default: None)
     """
 
     name: str
@@ -190,7 +190,10 @@ def get_repos(owner: str, archive: bool = False) -> list[str]:
 
 
 def filter_repos_by_allowlist(repos: list[str], allowlist: tuple[str, ...] | None) -> list[str]:
-    """Return only repos matching any glob pattern in allowlist. If allowlist is None, return all."""
+    """Return only repos matching any glob pattern in allowlist.
+
+    Returns all repos if allowlist is None.
+    """
     if allowlist is None:
         return repos
     return [r for r in repos if any(fnmatch.fnmatch(r, pattern) for pattern in allowlist)]
