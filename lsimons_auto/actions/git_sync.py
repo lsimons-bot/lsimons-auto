@@ -50,6 +50,21 @@ OWNER_CONFIGS = [
 ]
 
 
+# Per-repo hostname restrictions: "<owner>/<repo>" -> required hostname prefix.
+# Matching repos are only cloned/updated on hosts whose name starts with the prefix.
+REPO_HOSTNAME_RESTRICTIONS: dict[str, str] = {
+    "lsimons/lsimons-brain-data": "sbp",
+}
+
+
+def repo_hostname_allowed(owner: str, repo_name: str, hostname: str) -> bool:
+    """Return True if this repo may be synced on the given hostname."""
+    required = REPO_HOSTNAME_RESTRICTIONS.get(f"{owner}/{repo_name}")
+    if required is None:
+        return True
+    return hostname.startswith(required)
+
+
 class ForkContext(NamedTuple):
     """Context about GitHub forks for the authenticated user."""
 
@@ -551,7 +566,13 @@ def sync_repo(
     return success
 
 
-def fetch_directory_repos(directory: Path, visited_repos: set[Path], dry_run: bool = False) -> None:
+def fetch_directory_repos(
+    directory: Path,
+    visited_repos: set[Path],
+    dry_run: bool = False,
+    owner: str | None = None,
+    hostname: str = "",
+) -> None:
     """Run git fetch on all git repositories in a directory that haven't been visited."""
     if not directory.exists():
         return
@@ -561,6 +582,9 @@ def fetch_directory_repos(directory: Path, visited_repos: set[Path], dry_run: bo
     # Iterate over subdirectories
     for item in directory.iterdir():
         if not item.is_dir():
+            continue
+
+        if owner and not repo_hostname_allowed(owner, item.name, hostname):
             continue
 
         # Check if it's a git repo
@@ -653,6 +677,9 @@ def main(args: list[str] | None = None) -> None:
         active_repos = filter_repos_by_allowlist(
             get_repos(owner=owner, archive=False), config.repo_allowlist
         )
+        active_repos = [
+            r for r in active_repos if repo_hostname_allowed(owner, r, current_hostname)
+        ]
         print(f"Found {len(active_repos)} active repositories for {owner}.")
 
         for repo in active_repos:
@@ -683,6 +710,9 @@ def main(args: list[str] | None = None) -> None:
                 archived_repos = filter_repos_by_allowlist(
                     get_repos(owner=owner, archive=True), config.repo_allowlist
                 )
+                archived_repos = [
+                    r for r in archived_repos if repo_hostname_allowed(owner, r, current_hostname)
+                ]
                 print(f"Found {len(archived_repos)} archived repositories for {owner}.")
 
                 for repo in archived_repos:
@@ -711,11 +741,15 @@ def main(args: list[str] | None = None) -> None:
                 print(f"Skipping archived repositories for {owner} (configured to ignore)")
 
         # Sync any other existing repos in the directories
-        fetch_directory_repos(owner_dir, visited_repos, parsed_args.dry_run)
+        fetch_directory_repos(
+            owner_dir, visited_repos, parsed_args.dry_run, owner, current_hostname
+        )
 
         # Only scan archive directory if archives are included
         if parsed_args.include_archive and archive_dir.exists():
-            fetch_directory_repos(archive_dir, visited_repos, parsed_args.dry_run)
+            fetch_directory_repos(
+                archive_dir, visited_repos, parsed_args.dry_run, owner, current_hostname
+            )
 
 
 if __name__ == "__main__":
