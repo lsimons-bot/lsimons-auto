@@ -142,6 +142,12 @@ def start_the_day() -> None:
         "Git repositories synced",
     )
 
+    run_command(
+        ["auto", "clean-tmp"],
+        "Cleaning scratch directory",
+        "Scratch directory cleaned",
+    )
+
     # run_command(
     #     ["auto", "update-desktop-background"],
     #     "Updating desktop background",
