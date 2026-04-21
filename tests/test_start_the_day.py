@@ -24,8 +24,10 @@ from lsimons_auto.start_the_day import (
     get_today_date,
     load_execution_state,
     parse_toml_simple,
+    run_command,
     save_execution_state,
     update_execution_state,
+    wait_for_network,
     write_toml_simple,
 )
 
@@ -153,6 +155,32 @@ class TestStartTheDay(unittest.TestCase):
         """Test colorization with invalid color returns plain text."""
         result = colorize_text("test message", "invalid", force_color=True)
         self.assertEqual(result, "test message")
+
+    def test_run_command_returns_true_on_success(self) -> None:
+        """run_command returns True when subprocess exits zero."""
+        self.assertTrue(run_command(["true"], "Test action", "Done"))
+
+    def test_run_command_returns_false_on_failure(self) -> None:
+        """run_command returns False when subprocess exits non-zero."""
+        self.assertFalse(run_command(["false"], "Test action", "Done"))
+
+    def test_wait_for_network_returns_true_when_reachable(self) -> None:
+        """wait_for_network returns True when the socket connects immediately."""
+        with patch("lsimons_auto.start_the_day.socket.create_connection") as mock_conn:
+            mock_conn.return_value.__enter__.return_value = None
+            mock_conn.return_value.__exit__.return_value = False
+            self.assertTrue(wait_for_network(timeout_seconds=1))
+
+    def test_wait_for_network_returns_false_on_timeout(self) -> None:
+        """wait_for_network returns False when the socket keeps failing past the deadline."""
+        with (
+            patch(
+                "lsimons_auto.start_the_day.socket.create_connection",
+                side_effect=OSError("unreachable"),
+            ),
+            patch("lsimons_auto.start_the_day.time.sleep"),
+        ):
+            self.assertFalse(wait_for_network(timeout_seconds=0))
 
 
 @pytest.mark.integration

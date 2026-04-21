@@ -132,6 +132,35 @@ def install_launch_agent() -> None:
             print(f"Warning: Failed to load LaunchAgent {plist_file}.")
 
 
+def print_tcc_instructions() -> None:
+    """Print instructions for granting Full Disk Access to the Python interpreter.
+
+    # Why: organize-desktop reads ~/Desktop, which macOS TCC blocks for launchd-spawned
+    # processes. There is no CLI to grant this (tccutil only resets); the user must
+    # add the binary manually once per install. Apple deliberately requires GUI or MDM.
+    """
+    script_dir = Path(__file__).parent.absolute()
+    venv_python = script_dir / ".venv" / "bin" / "python"
+
+    print("\n" + "=" * 72)
+    print("ONE-TIME MANUAL STEP: grant Full Disk Access")
+    print("=" * 72)
+    print("macOS blocks launchd-run scripts from reading ~/Desktop etc. by default.")
+    print("To let organize-desktop work, add this binary to Full Disk Access:")
+    print()
+    print(f"  {venv_python}")
+    print()
+    print("Steps:")
+    print("  1. Open System Settings → Privacy & Security → Full Disk Access")
+    print("  2. Click the '+' button (authenticate if prompted)")
+    print("  3. Press Cmd+Shift+G and paste the path above, then press Enter")
+    print("  4. Select the 'python' binary and click Open")
+    print("  5. Make sure its toggle is on")
+    print()
+    print("This must be redone after a clean macOS reinstall.")
+    print("=" * 72)
+
+
 def main() -> None:
     """Main installation function."""
     print("Installing lsimons-auto...")
@@ -146,6 +175,8 @@ def main() -> None:
     print("- The start-the-day script will automatically run daily at 7:00 AM via LaunchAgent")
     print("- Logs will be written to ~/.local/log/start-the-day.log")
     print("- Use 'auto --help' to see available actions")
+
+    print_tcc_instructions()
 
 
 if __name__ == "__main__":

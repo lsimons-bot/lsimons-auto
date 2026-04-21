@@ -8,8 +8,10 @@ See AGENTS.md for agent instructions and DESIGN.md for design decisions.
 import argparse
 import datetime
 import os
+import socket
 import subprocess
 import sys
+import time
 import tomllib
 
 
@@ -110,8 +112,8 @@ def colorize_text(text: str, color: str, force_color: bool = False) -> str:
     return text
 
 
-def run_command(command: list[str], action_name: str, success_message: str) -> None:
-    """Run a command with error handling and status messages."""
+def run_command(command: list[str], action_name: str, success_message: str) -> bool:
+    """Run a command with error handling and status messages. Returns True on success."""
     print(colorize_text(f"{action_name}: `{' '.join(command)}`...", "blue"))
     try:
         result = subprocess.run(command, check=True, text=True, capture_output=True)
@@ -120,33 +122,60 @@ def run_command(command: list[str], action_name: str, success_message: str) -> N
         if result.stderr:
             print(result.stderr.strip(), file=sys.stderr)
         print(colorize_text(f"✓ {success_message}", "green"))
+        return True
     except subprocess.CalledProcessError as e:
         print(f"Warning: Failed to {action_name.lower()}: {e}")
         if e.stdout:
             print(f"stdout: {e.stdout}")
         if e.stderr:
             print(f"stderr: {e.stderr}", file=sys.stderr)
+        return False
 
 
-def start_the_day() -> None:
-    """Main function that runs the daily startup routine."""
+def wait_for_network(
+    host: str = "api.github.com",
+    port: int = 443,
+    timeout_seconds: int = 300,
+) -> bool:
+    """Wait until a TCP connection to host:port succeeds. Returns False on timeout.
+
+    # Why: launchd StartCalendarInterval can fire during DarkWake before Wi-Fi is
+    # usable. Block here so downstream steps don't silently fail on a half-awake
+    # machine; callers should exit without marking the day done so the next wake retries.
+    """
+    deadline = time.monotonic() + timeout_seconds
+    delay = 2.0
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=5):
+                return True
+        except OSError as e:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                print(f"Network check to {host}:{port} failed after {timeout_seconds}s: {e}")
+                return False
+            sleep_for = min(delay, remaining)
+            print(f"Network not ready ({e}); retrying in {sleep_for:.0f}s...")
+            time.sleep(sleep_for)
+            delay = min(delay * 2, 30.0)
+
+
+def start_the_day() -> bool:
+    """Run the daily startup routine. Returns True only if all steps succeeded."""
     print(colorize_text("Good morning!", "yellow"))
     print(colorize_text("Starting your day...", "blue"))
 
-    # Run daily tasks
-    run_command(["auto", "organize-desktop"], "Organizing desktop", "Desktop organized")
+    if not wait_for_network():
+        print(colorize_text("Aborting — network unavailable. Will retry on next wake.", "yellow"))
+        return False
 
-    run_command(
-        ["auto", "git-sync"],
-        "Syncing git repositories",
-        "Git repositories synced",
-    )
-
-    run_command(
-        ["auto", "clean-tmp"],
-        "Cleaning scratch directory",
-        "Scratch directory cleaned",
-    )
+    results: list[bool] = [
+        run_command(["auto", "organize-desktop"], "Organizing desktop", "Desktop organized"),
+        run_command(["auto", "git-sync"], "Syncing git repositories", "Git repositories synced"),
+        run_command(
+            ["auto", "clean-tmp"], "Cleaning scratch directory", "Scratch directory cleaned"
+        ),
+    ]
 
     # run_command(
     #     ["auto", "update-desktop-background"],
@@ -160,7 +189,12 @@ def start_the_day() -> None:
     #     "Apps launched",
     # )
 
-    print(colorize_text("✓ Daily startup routine completed", "green"))
+    all_ok = all(results)
+    if all_ok:
+        print(colorize_text("✓ Daily startup routine completed", "green"))
+    else:
+        print(colorize_text("✗ Daily startup had failures — will retry on next wake.", "yellow"))
+    return all_ok
 
 
 def main() -> None:
@@ -182,9 +216,13 @@ def main() -> None:
 
     # Run the daily routine
     try:
-        start_the_day()
-        update_execution_state()
-        print("Daily startup completed successfully!")
+        succeeded = start_the_day()
+        if succeeded:
+            update_execution_state()
+            print("Daily startup completed successfully!")
+        else:
+            print("Daily startup incomplete — not marking today as done.")
+            sys.exit(1)
     except Exception as e:
         print(f"Error during startup routine: {e}")
         sys.exit(1)
